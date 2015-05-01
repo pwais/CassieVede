@@ -13,15 +13,20 @@
 // limitations under the License.
 
 name := "cassievede"
-
 version := "0.0.1"
-
 scalaVersion := "2.10.4"
 
 // Assembly
 addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.12.0")
 
+// Test
+libraryDependencies += "org.scalatest" %% "scalatest" % "2.2.1" % "test"
+
+// CLI
+libraryDependencies += "com.github.scopt" %% "scopt" % "3.3.0"
+resolvers += Resolver.sonatypeRepo("public")
+
 // Spark
 resolvers += "Spark Package Main Repo" at "https://dl.bintray.com/spark-packages/maven"
-
 addSbtPlugin("org.spark-packages" % "sbt-spark-package" % "0.2.1")
+
