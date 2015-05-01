@@ -19,8 +19,12 @@ scalaVersion := "2.10.4"
 // Assembly
 addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.12.0")
 
-// Test
-libraryDependencies += "org.scalatest" %% "scalatest" % "2.2.1" % "test"
+// Scala Unit Testing
+libraryDependencies += "org.scalatest" %% "scalatest" % "2.2.4" % "test"
+
+// Java Unit Testing
+libraryDependencies += "junit" % "junit" % "4.12" % "test"
+libraryDependencies += "com.novocode" % "junit-interface" % "0.11" % Test
 
 // CLI
 libraryDependencies += "com.github.scopt" %% "scopt" % "3.3.0"
@@ -29,4 +33,10 @@ resolvers += Resolver.sonatypeRepo("public")
 // Spark
 resolvers += "Spark Package Main Repo" at "https://dl.bintray.com/spark-packages/maven"
 addSbtPlugin("org.spark-packages" % "sbt-spark-package" % "0.2.1")
+libraryDependencies += "org.apache.spark" %% "spark-core" % "1.3.1"
 
+// Cassandra
+libraryDependencies += "com.datastax.cassandra"  % "cassandra-driver-core" % "2.1.5"
+
+// Cassandra Test
+libraryDependencies += "org.cassandraunit" % "cassandra-unit" % "2.0.2.2" % "test"
