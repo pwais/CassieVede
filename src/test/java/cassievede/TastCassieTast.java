@@ -3,12 +3,10 @@ package cassievede;
 import static org.junit.Assert.assertEquals;
 
 import org.cassandraunit.CassandraCQLUnit;
-import org.cassandraunit.utils.EmbeddedCassandraServerHelper;
-import org.junit.After;
-import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 
+import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.ResultSet;
 
 public class TastCassieTast {
@@ -16,15 +14,15 @@ public class TastCassieTast {
   public static CassandraCQLUnit unit =
       new CassandraCQLUnit(new TastCQLDataSet());
   
-  @BeforeClass
-  public static void before() throws Exception {
-    EmbeddedCassandraServerHelper.startEmbeddedCassandra();
-  }
-  
-  @After
-  public void after() throws Exception {
-    EmbeddedCassandraServerHelper.cleanEmbeddedCassandra();
-  }
+//  @BeforeClass
+//  public static void before() throws Exception {
+//    EmbeddedCassandraServerHelper.startEmbeddedCassandra();
+//  }
+//  
+//  @After
+//  public void after() throws Exception {
+//    EmbeddedCassandraServerHelper.cleanEmbeddedCassandra();
+//  }
   
   @Test
   public void basicTest() {
@@ -35,5 +33,9 @@ public class TastCassieTast {
     System.out.println(v);
     System.out.println(v);
     System.out.println(v);
+    
+    System.out.println(
+        Cluster.builder().addContactPoint("127.0.0.1").withPort(9142).build()
+        .newSession().execute("DESCRIBE KEYSPACE moo"));
   }
 }

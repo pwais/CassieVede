@@ -35,6 +35,41 @@ class ExampleSpec extends FlatSpec with Matchers {
 	  stack.push("moof")
 	  stack.pop()
 	  stack.size should be (0)
+
+
+    val k =
+"""
+CREATE KEYSPACE cassievede
+WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };
+
+CREATE TABLE cassievede.dataset
+  (id int PRIMARY KEY,
+   name varchar);
+
+CREATE TABLE cassievede.image
+  (datasetid int,              // Foreign key: dataset.id
+   partitionid varint,         // Optionally partition a very large dataset
+   name varchar,               // Name of the image, e.g. original filename
+   data blob,                  // Raw image file (e.g. jpeg data)
+   classnames list<varchar>,   // Label classnames (e.g. for cropped objects)
+   width varint,               // (Optional hint) known width of image
+   height varint,              // (Optional hint) known height of image
+   geoid varint,               // (Optional hint) geohash key (e.g. from EXIF)
+   longitude double,           // (Optional hint) (e.g. from EXIF)
+   latitude double,            // (Optional hint) (e.g. from EXIF)
+   extra map<varchar, blob>,   // (Optional) K-v of serialized data
+
+   PRIMARY KEY ((datasetid, partitionid), name))
+                               // (datasetid, partitionid) -> max 4B names
+WITH
+  caching = 'keys_only' AND    // Don't cache image data!
+  compression =                // TODO: Try LZ4
+    {'sstable_compression': ''} AND
+  compaction =                 // Optimize for reads
+    { 'class' :  'LeveledCompactionStrategy'  };
+
+
+"""
   }
 }
 
