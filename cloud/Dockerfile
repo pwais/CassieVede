@@ -31,12 +31,21 @@ RUN echo "deb http://www.apache.org/dist/cassandra/debian 21x main" >> /etc/apt/
 	apt-get update && \
 	apt-get -qq -y install cassandra
 
-# Scala
+ADD cassandra.yaml /etc/cassandra/cassandra.yaml
+
+# Scala / sbt
 RUN echo "deb http://dl.bintray.com/sbt/debian /" >> /etc/apt/sources.list.d/sbt.list && \
     apt-get update && \
     apt-get install --force-yes -y sbt && \
 	sbt help
 
+# Warm up sbt dependencies
+ADD CassieVedeSBTInit /opt/CassieVedeSBTInit
+RUN cd /opt/CassieVedeSBTInit && sbt update
+
 # Utils
 RUN apt-get -y install git vim curl wget time s3cmd iftop 
 
+ADD startup.sh /opt/CassieVedeUtil/startup.sh
+RUN chmod a+x /opt/CassieVedeUtil/startup.sh
+CMD /opt/CassieVedeUtil/startup.sh

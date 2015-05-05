@@ -1,5 +1,9 @@
-target/
+*.DS_Store
+
 .project
 .classpath
 .cache
-/bin/
+.pydevproject
+
+bin/
+target/

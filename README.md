@@ -49,5 +49,13 @@ max user processes              (-u) 1048576   <-- Success!
 ...
 ```
 
+In the Cassandra log, you'll see something like: 
+```
+INFO CLibrary: JNA mlockall successful
+```
+instead of:
+```
+CLibrary: Unable to lock JVM memory (ENOMEM). This can result in part of the JVM being swapped out, especially with mmapped I/O enabled. ...
+```
 
 discuss decision about images and file size is ok

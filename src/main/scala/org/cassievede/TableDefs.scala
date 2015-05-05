@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+package org.cassievede
+
 object Defs {
 
   val CVKeyspaceName = "cassievede"

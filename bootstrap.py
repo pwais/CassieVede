@@ -359,6 +359,18 @@ if __name__ == '__main__':
 
   if opts.indocker:
     log.info("Building docker image")
+    
+    # Copy our project's build settings into the image
+    # so that sbt can pre-fetch dependencies and include
+    # them in the Docker image.  This step reduces
+    # sbt startup time (for development) considerably
+    # (at the cost of making the image large ... )
+    run_in_shell(
+      "mkdir -p cloud/CassieVedeSBTInit/ && "
+      "mkdir -p cloud/CassieVedeSBTInit/project && "
+      "cp build.sbt cloud/CassieVedeSBTInit/ && "
+      "cp project/plugins.sbt cloud/CassieVedeSBTInit/project/")
+    
     run_in_shell(
       "cd cloud && docker build -t " + opts.docker_tag + " .")
     
@@ -366,10 +378,10 @@ if __name__ == '__main__':
     # Only mount the source, not e.g. build or deps, which can't
     # be shared.
     vol_maps = (
-        (os.path.abspath('src'), '/opt/CassieVede/src'),
-		(os.path.abspath('build.sbt'), '/opt/CassieVede/build.sbt'),
-		(os.path.abspath('LICENSE'), '/opt/CassieVede/LICENSE'),
-		(os.path.abspath('project'), '/opt/CassieVede/project'))
+      (os.path.abspath('src'), '/opt/CassieVede/src'),
+  		(os.path.abspath('build.sbt'), '/opt/CassieVede/build.sbt'),
+  		(os.path.abspath('LICENSE'), '/opt/CassieVede/LICENSE'),
+  		(os.path.abspath('project'), '/opt/CassieVede/project'))
     docker_cmd = (
       "docker run -it " +
         "-w /opt/CassieVede " +

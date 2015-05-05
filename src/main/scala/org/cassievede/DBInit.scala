@@ -14,23 +14,19 @@
  * limitations under the License.
  */
 
+package org.cassievede
+
 import com.datastax.driver.core.Cluster
 
 object DBUtil {
   def CreateCassie(host: String, port: Int) : Unit = {
     val cluster =
       Cluster.builder().addContactPoint(host).withPort(port).build()
-
-//    if (cluster.describeKeyspace(Defs.CVKeyspaceName)) return
-
-
-
     val session = cluster.newSession()
 
-    val result = session.execute("DESCRIBE KEYSPACE " + Defs.CVKeyspaceName)
-
-
-//    val session = cluster.connect(Defs.CVKeyspaceName)
+    session.execute(Defs.Keyspace)
+    session.execute(Defs.DatasetTable)
+    session.execute(Defs.ImageTable)
   }
 }
 
