@@ -43,6 +43,15 @@ RUN echo "deb http://dl.bintray.com/sbt/debian /" >> /etc/apt/sources.list.d/sbt
 ADD CassieVedeSBTInit /opt/CassieVedeSBTInit
 RUN cd /opt/CassieVedeSBTInit && sbt update
 
+# Captain Proto build dependencies
+RUN apt-get -y install pkg-config build-essential clang llvm lldb-3.4 cmake dh-autoreconf libc++abi-dev libc++-dev
+
+## Captain Proto needs >= cmake 3.1
+#RUN apt-get -y install software-properties-common python-software-properties
+#RUN add-apt-repository ppa:george-edison55/cmake-3.x 
+#RUN apt-get update 
+#RUN apt-get -y upgrade cmake
+
 # Utils
 RUN apt-get -y install git vim curl wget time s3cmd iftop 
 

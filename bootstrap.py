@@ -14,6 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Based on Oarphkit bootstrap.py
+
 import logging
 import multiprocessing
 import os
@@ -26,10 +28,8 @@ from optparse import OptionGroup
 USAGE = (
 """%prog [options]
 
-TODO TODO TODO
-
-Bootstrap OarphKit and run common development actions. 
-Run in the root of the Oarphkit repository.  In a fresh
+Bootstrap CassieVede and run common development actions. 
+Run in the root of the CassieVede repository.  In a fresh
 checkout, run:
   $ ./bootstrap.py --all
 
@@ -52,7 +52,7 @@ LOG_FORMAT = "%(asctime)s\t%(name)-4s %(process)d : %(message)s"
 if __name__ == '__main__':
   
   # Direct all script output to a log
-  log = logging.getLogger("ok.bootstrap")
+  log = logging.getLogger("cv.bootstrap")
   log.setLevel(logging.INFO)
   console_handler = logging.StreamHandler(stream=sys.stderr)
   console_handler.setFormatter(logging.Formatter(LOG_FORMAT))
@@ -75,20 +75,11 @@ if __name__ == '__main__':
     '--deps-dir', default=os.path.abspath('deps'),
     help="Download all dependencies to this path [default %default]")
   config_group.add_option(
-    '--build-dir', default=os.path.abspath('build'),
-    help="Place all build resources here [default %default]")
-  config_group.add_option(
     '--parallel', type="string", default=str(multiprocessing.cpu_count()),
     help="Use this build parallelism [default %default]")
   config_group.add_option(
-    '--build-type', type="string", default='Debug',
-    help="Build this build type (e.g. Debug or Release)")
-  config_group.add_option(
-    '--proj-dir', type="string", default='projects',
-    help="Generate IDE Project files here [default %default]")
-  config_group.add_option(
     '--docker-tag', type="string", default='cassievedebox',
-    help="Give Docker containers this tag")
+    help="Give the Docker dev container this tag [default: %default]")
   option_parser.add_option_group(config_group)
   
   actions_group = OptionGroup(
@@ -97,10 +88,10 @@ if __name__ == '__main__':
                     "Prepare/execute common build actions")
   actions_group.add_option(
     '--all', default=False, action='store_true',
-    help="Equivalent to --deps --build --test --install-local")
+    help="Equivalent to --deps --build --test")
   actions_group.add_option(
     '--clean', default=False, action='store_true',
-    help="Clear dirs: --build-dir --deps-dir")
+    help="Clear dirs: --deps-dir")
   actions_group.add_option(
     '--deps', default=False, action='store_true',
     help="Download, build, and test all dependencies to --deps-dir")
@@ -108,29 +99,23 @@ if __name__ == '__main__':
     '--build', default=False, action='store_true',
     help="Build using local dependencies")
   actions_group.add_option(
-    '--build-system', default=False, action='store_true',
-    help="Build using system dependencies (can skip --deps)")
-  actions_group.add_option(
     '--test', default=False, action='store_true',
     help="Run unit tests")
   actions_group.add_option(
     '--install-local', default=False, action='store_true',
-    help="Install to --build-dir")
+    help="Publish to local Maven / Ivy repo")
   
   actions_group.add_option(
     '--eclipse', default=False, action='store_true',
     help="Generate Eclipse project")
-  actions_group.add_option(
-    '--xcode', default=False, action='store_true',
-    help="Generate XCode project")
   
-  actions_group.add_option(
-    '--proto-pb', default=False, action='store_true',
-    help="Regenerate Protobuf code")
   actions_group.add_option(
     '--proto-capnp', default=False, action='store_true',
     help="Regenerate Captain Proto code")
   
+  actions_group.add_option(
+    '--build-docker', default=False, action='store_true',
+    help="Build the dev machine docker container.")
   actions_group.add_option(
     '--indocker', default=False, action='store_true',
     help="Drop into a Dockerized bash shell with the current project's "
@@ -149,8 +134,6 @@ if __name__ == '__main__':
   
   if opts.clean:
     run_in_shell('rm -rf ' + os.path.join(opts.deps_dir, '*'))
-    run_in_shell('rm -rf ' + opts.build_dir)
-    run_in_shell('rm -rf ' + opts.proj_dir)
     sys.exit(0)
   
   if opts.all:
@@ -163,124 +146,71 @@ if __name__ == '__main__':
   ## Dependencies
   ##
   
-  GTEST_PATH = os.path.abspath(os.path.join(opts.deps_dir, 'gtest'))
   PROTOBUF_PATH = os.path.abspath(os.path.join(opts.deps_dir, 'protobuf'))
+  CAPNP_JAVA_PATH = os.path.abspath(os.path.join(opts.deps_dir, 'capnproto-java'))
   CAPNP_PATH = os.path.abspath(os.path.join(opts.deps_dir, 'capnproto'))
   if opts.deps:     
     run_in_shell("git submodule update --init")
     
-    # == gtest ==
-    # First build gtest
-    if not os.path.exists(os.path.join(GTEST_PATH, 'libgtest.a')):
-      if platform.system() == "Darwin":
-        GTEST_CMAKE_OPTS = "-Dgtest_build_tests=ON -DGTEST_USE_OWN_TR1_TUPLE=1"
-      else:
-        GTEST_CMAKE_OPTS = ("-Dgtest_build_tests=ON " +
-          # Force linux build to use C++11/libc++ 
-          '-DCMAKE_CXX_COMPILER="clang++" -DCMAKE_CXX_FLAGS="-fPIC -std=c++11 -stdlib=libc++ -DGTEST_USE_OWN_TR1_TUPLE=1"')      
-      run_in_shell(
-        "cd " + GTEST_PATH + " && " +
-        "cmake " + GTEST_CMAKE_OPTS + " . && " + MAKE_J_PARALLEL + " && " +
-        # Now test gtest
-        "make test")
-    
-    # == protobuf ==
-    if not os.path.exists(os.path.join(PROTOBUF_PATH, 'bin/protoc')):
-      # Configure for C++11 support! And install locally!
-      # https://code.google.com/p/protobuf/issues/detail?id=567
-      PROTOBUF_CONFIGURE = (
-        './configure --prefix=$(pwd)/$TARGET ' +
-        'CC=clang CXX=clang++ ' +
-        'CXXFLAGS="-fPIC -std=c++11 -stdlib=libc++ -O3 -g -DGTEST_USE_OWN_TR1_TUPLE=1" ' +
-        'LDFLAGS="-lc++ -stdlib=libc++"')
-      if platform.system() == "Darwin":
-        PROTOBUF_CONFIGURE += ' LIBS="-lc++ -lc++abi"'
-        
-      run_in_shell(
-        "cd deps/protobuf && " +
-        "./autogen.sh && " +
-        PROTOBUF_CONFIGURE + " && " +
-        # Note that Google doesn't distro gtest correctly :P
-        # so we don't run tests for now :(
-        # https://github.com/google/protobuf/issues/119
-        MAKE_J_PARALLEL + " && make install && ./bin/protoc -h")
-    
-    # == capnp ==
+    # == capnp c++ ==
     if not os.path.exists(os.path.join(CAPNP_PATH, 'lib/libkj.a')):
       run_in_shell(
         "cd " + os.path.join(CAPNP_PATH, 'c++') + " && " +
-        'cmake -DCMAKE_CXX_FLAGS="-fPIC -std=c++11 -stdlib=libc++" -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_INSTALL_PREFIX:PATH=' + CAPNP_PATH + " . && " +
+        "cmake -DCAPNP_INCLUDE_DIR=" + os.path.join(CAPNP_PATH, 'include/') + " -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_INSTALL_PREFIX:PATH=" + CAPNP_PATH + " . && " +
         MAKE_J_PARALLEL + " && " +
         "make install && " +
         # Now test capnp
         "./src/capnp/capnp-tests && ./src/capnp/capnp --help")
     
-    # == cmake ==
-    try:
-      run_in_shell("cmake --version")
-    except Exception:
-      print >> sys.stderr, \
-        """
-        ************************************************
-        ************************************************
-         
-        Cmake not found! on Mac, install Macports:
-         https://www.macports.org/
-        and then run
-         $ sudo port install cmake
-         $ apt-get -y install cmake
-         
-        ************************************************
-        ************************************************
-        """
-      sys.exit(-1)
-  
-  
-  
-  ##
-  ## Building
-  ##
-
-  CMAKE_CMD = (
-      "cmake -DCMAKE_BUILD_TYPE=" + opts.build_type + " " + 
-      "-DCMAKE_INSTALL_PREFIX:PATH=" + opts.build_dir + " " + 
-      "-DCMAKE_VERBOSE_MAKEFILE=ON ")
-    
-  # We currently want to force clang as the compiler
-  # TODO(for android) support gcc
-  CMAKE_CMD += (
-    "-DCMAKE_C_COMPILER=clang " +
-    "-DCMAKE_CXX_COMPILER=clang++ ")
-    
-  if not opts.build_system:
-    # Tell cmake to use dependencies in /deps
-    CMAKE_CMD += (
-      "-DGTEST_ROOT=" + GTEST_PATH +" " +
+    # == capnp java ==
+    if not os.path.exists(os.path.join(CAPNP_JAVA_PATH, 'runtime/target/runtime-0.1.0-SNAPSHOT.jar')):
       
-      "-DPROTOBUF_LIBRARY=" + os.path.join(PROTOBUF_PATH, "lib/libprotobuf.a") + " " +
-      "-DPROTOBUF_INCLUDE_DIR=" + os.path.join(PROTOBUF_PATH, "include") + " " +
+      if not os.path.exists("/usr/local/include/capnp"):
+        print >> sys.stderr, \
+          """
+          ************************************************
+          ************************************************
+           
+          Warn: capnp includes not found (e.g. c++.capnp).
+          Unfortunately the capnproto-java depends on
+          system-installed base *.capnp includes. We'll
+          try to symlink the includes into place, but if
+          link fails (e.g. due to permissions), you'll
+          need to either set up the link yourself or
+          compile capnproto-java manually
+          (e.g. perhaps just `$ sbt compile`).
+           
+          ************************************************
+          ************************************************
+          """
+        run_shell(
+          "ln -s " + os.path.join(CAPNP_PATH, 'include/capnp') + " /usr/local/include/capnp")
       
-      "-DCAPNP_INCLUDE_DIRS=" + os.path.join(CAPNP_PATH, "include") + " " +
-      "-DCAPNP_LIB_KJ=" + os.path.join(CAPNP_PATH, "lib/libkj.a") + " " +
-      "-DCAPNP_LIB_CAPNP=" + os.path.join(CAPNP_PATH, "lib/libcapnp.a") + " " +
-      # For non-lite build; needed for dynamic
-      "-DCAPNP_LIB_KJ-ASYNC=" + os.path.join(CAPNP_PATH, "lib/libkj-async.a") + " " + 
-      "-DCAPNP_LIB_CAPNP-RPC=" + os.path.join(CAPNP_PATH, "lib/libcapnp-rpc.a") + " " +
-      "-DCAPNP_LIB_CAPNPC=" + os.path.join(CAPNP_PATH, "lib/libcapnpc.a"))
+      # Help capnproto-java / sbt find the capnp compiler
+      os.environ['PKG_CONFIG_PATH'] = (
+         os.environ.get('PKG_CONFIG_PATH', '') + ':' + os.path.join(CAPNP_PATH, 'c++/'))
+      os.environ['PATH'] = (
+         os.environ.get('PATH', '') + ':' + os.path.join(CAPNP_PATH, 'bin/'))
+      run_in_shell(
+        "cd " + CAPNP_JAVA_PATH + " && "
+        "make && sbt compile test package publishLocal")
+    
+  
+  
+  
+   ##
+   ## Building
+   ##
 
-  if opts.build or opts.build_system:
+  if opts.build:
     log.info("Building in " + opts.build_dir)
-    run_in_shell(
-      "mkdir -p " + opts.build_dir + " && " +
-      "cd " + opts.build_dir + " && " +
-      CMAKE_CMD + " " + os.path.relpath(ROOT, opts.build_dir) + " && " +
-      MAKE_J_PARALLEL)
+    run_in_shell("sbt compile")
     
-  if opts.install_local:
-    run_in_shell("cd " + opts.build_dir + " && make install")
-  
   if opts.test:
-    run_in_shell("cd " + opts.build_dir + " && ./oarphkit_test 2> /dev/null")
+    run_in_shell("sbt test")
+  
+  if opts.install_local:
+    run_in_shell("sbt package publishLocal")
 
 
 
@@ -289,25 +219,7 @@ if __name__ == '__main__':
   ##
 
   if opts.eclipse:
-    ECLIPSE_DIR = os.path.join(opts.proj_dir, 'eclipse')
-    run_in_shell(
-      "mkdir -p " + ECLIPSE_DIR + " && " +
-      "cd " + ECLIPSE_DIR + " && " +
-      CMAKE_CMD + " -G'Eclipse CDT4 - Unix Makefiles' " + os.path.relpath(ROOT, ECLIPSE_DIR))
-
-    # An easy way to make Eclipse see the real source directories
-    # and build a directory tree in the project GUI:
-    # we simply symlink the source into the Eclipse project root
-    OARPHKIT_SRC = os.path.abspath('oarphkit')
-    OARPHKIT_TEST_SRC = os.path.abspath('oarphkit_test')
-    if not os.path.exists(os.path.join(ECLIPSE_DIR, 'oarphkit_src')):
-      run_in_shell(
-        "ln -s " + OARPHKIT_SRC + " " + 
-        os.path.join(ECLIPSE_DIR, 'oarphkit_src'))
-    if not os.path.exists(os.path.join(ECLIPSE_DIR, 'oarphkit_test_src')):
-      run_in_shell(
-        "ln -s " + OARPHKIT_TEST_SRC + " " + 
-        os.path.join(ECLIPSE_DIR, 'oarphkit_test_src'))
+    run_in_shell("sbt eclipse with-source=true")
 
     print >> sys.stderr, \
       """
@@ -316,48 +228,20 @@ if __name__ == '__main__':
        
       To use the generated Eclipse Project, go to
       Import > Existing Project, and then choose
-      the directory
+      the repo root as the project directory
         %s
        
       ************************************************
       ************************************************
-      """ % (ECLIPSE_DIR,)
+      """ % (os.path.abspath('.'),)
   
-  if opts.xcode:
-    # Discussion: While cmake generates a useful XCode project, we'll
-    # probably eventually want to manually create an iOS Framework and
-    # CocoaPod for the library.  FWIW, we tried GYP and generated an even
-    # worse XCode project than cmake.  Moreover, XCode setting specification
-    # is rather awkward in GYP (and, honestly, in any tool outside of
-    # XCode itself).  Git merge conflicts on XCode project files are
-    # a horrible time suck, but at the time of writing there's no 
-    # obviously better solution.  We might want to look at Facebook Buck
-    # or Google Bazel
-    
-    XCODE_DIR = os.path.join(opts.proj_dir, 'xcode')
-    run_in_shell(
-      "mkdir -p " + XCODE_DIR + " && " +
-      "cd " + XCODE_DIR + " && " +
-      CMAKE_CMD + " -G'Xcode' " + os.path.relpath(ROOT, XCODE_DIR))
 
-    print >> sys.stderr, \
-      """
-      ************************************************
-      ************************************************
-       
-      To use the generated XCode Project, open
-      the project file at:
-        %s
-       
-      ************************************************
-      ************************************************
-      """ % (os.path.join(XCODE_DIR, 'OarphKit.xcodeproj'),)
 
   ##
   ## Docker
   ##
 
-  if opts.indocker:
+  if opts.build_docker:
     log.info("Building docker image")
     
     # Copy our project's build settings into the image
@@ -373,7 +257,8 @@ if __name__ == '__main__':
     
     run_in_shell(
       "cd cloud && docker build -t " + opts.docker_tag + " .")
-    
+  
+  if opts.indocker:  
     log.info("Dropping into Dockerized bash ...")
     # Only mount the source, not e.g. build or deps, which can't
     # be shared.
@@ -381,7 +266,10 @@ if __name__ == '__main__':
       (os.path.abspath('src'), '/opt/CassieVede/src'),
   		(os.path.abspath('build.sbt'), '/opt/CassieVede/build.sbt'),
   		(os.path.abspath('LICENSE'), '/opt/CassieVede/LICENSE'),
-  		(os.path.abspath('project'), '/opt/CassieVede/project'))
+  		(os.path.abspath('project'), '/opt/CassieVede/project'),
+      (os.path.abspath('bootstrap.py'), '/opt/CassieVede/bootstrap.py'),
+      (os.path.abspath('.git'), '/opt/CassieVede/.git'),
+      (os.path.abspath('.gitmodules'), '/opt/CassieVede/.gitmodules'),)
     docker_cmd = (
       "docker run -it " +
         "-w /opt/CassieVede " +
@@ -398,10 +286,10 @@ if __name__ == '__main__':
   if opts.proto_capnp:
     # TODO: eventually we may merge this into CMake
     CAPNP_COMPILER = os.path.abspath(
-                          os.path.join(CAPNP_PATH, 'c++/src/capnp/capnp'))
+                        os.path.join(CAPNP_PATH, 'c++/src/capnp/capnp'))
     # Put capnp execs on the PATH.  TODO: install capnp localling in deps
     DEPS = os.path.abspath('./deps/capnproto/c++/src/capnp')
-    os.environ['PATH'] = os.environ['PATH'] + ':' + DEPS
+    os.environ['PATH'] = os.environ.get('PATH', '') + ':' + DEPS
     run_in_shell(
       CAPNP_COMPILER + " " +
       "-I ./deps/capnproto/c++/src/ " +
@@ -420,22 +308,3 @@ if __name__ == '__main__':
       "compile ./oarphkit_test/ok_test/TestMessage.capnp " +
       " --src-prefix oarphkit_test/ok_test " + 
       " -oc++:./oarphkit_test/ok_test_msg/")
-
-  if opts.proto_pb:
-    # TODO: eventually we may merge this into CMake
-    PROTO_COMPILER = os.path.join(PROTOBUF_PATH, 'bin/protoc')
-    run_in_shell(
-      PROTO_COMPILER + " " +
-      "-Ioarphkit/ok/SVMap/ " +
-      "-Ioarphkit/ok/SerializationUtils/DynamicProto/ " +
-      "-Ioarphkit/ok/fli/Runtime/ " +
-      "--cpp_out=oarphkit/ok_msg/ " +
-      "oarphkit/ok/SerializationUtils/DynamicProto/DynamicProto.proto " +
-      "oarphkit/ok/SVMap/SVMapData.proto " +
-      "oarphkit/ok/fli/Runtime/FLiSpec.proto ")
-    run_in_shell(
-      PROTO_COMPILER + " " +
-      "-Ioarphkit_test/ok_test/ " +
-      "--cpp_out=oarphkit_test/ok_test_msg/ " +
-      "oarphkit_test/ok_test/TestMessage.proto ")
-

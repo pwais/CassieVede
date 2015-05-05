@@ -16,6 +16,9 @@ name := "cassievede"
 version := "0.0.1"
 scalaVersion := "2.10.4"
 
+// Allow local repo use
+resolvers += Resolver.mavenLocal
+
 // Scala Unit Testing
 libraryDependencies += "org.scalatest" %% "scalatest" % "2.2.4" % "test"
 
