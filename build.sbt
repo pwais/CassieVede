@@ -18,7 +18,6 @@ scalaVersion := "2.10.4"
 
 // Allow local repo use
 resolvers += Resolver.mavenLocal
-//resolvers += "Local Maven Repository" at "file://" + Path.userHome.absolutePath + "/.m2/repository"
 
 // Scala Unit Testing
 libraryDependencies += "org.scalatest" %% "scalatest" % "2.2.4" % "test"
@@ -40,5 +39,4 @@ libraryDependencies += "com.datastax.cassandra"  % "cassandra-driver-core" % "2.
 libraryDependencies += "org.cassandraunit" % "cassandra-unit" % "2.0.2.2" % "test"
 
 // Captain Proto
-//libraryDependencies += "org.capnproto" % "capnproto-java_2.11" % "0.1.0-SNAPSHOT"
 libraryDependencies += "org.capnproto" % "runtime" % "0.1.0-SNAPSHOT" changing()

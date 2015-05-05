@@ -175,7 +175,7 @@ if __name__ == '__main__':
           Unfortunately the capnproto-java depends on
           system-installed base *.capnp includes. We'll
           try to symlink the includes into place, but if
-          link fails (e.g. due to permissions), you'll
+          the links fail (e.g. due to permissions), you'll
           need to either set up the link yourself or
           compile capnproto-java manually
           (e.g. perhaps just `$ sbt compile`).
@@ -183,8 +183,17 @@ if __name__ == '__main__':
           ************************************************
           ************************************************
           """
-        run_shell(
-          "ln -s " + os.path.join(CAPNP_PATH, 'include/capnp') + " /usr/local/include/capnp")
+        run_in_shell("mkdir -p /usr/local/include/capnp/")
+        INCS = ("c++.capnp",
+                "persistent.capnp",
+                "rpc.capnp",
+                "rpc-twoparty.capnp",
+                "schema.capnp")
+        for i in INCS:
+          run_in_shell(
+            "ln -s " +
+            os.path.join(CAPNP_PATH, 'include/capnp', i) + " " + 
+            os.path.join("/usr/local/include/capnp/", i))
       
       # Help capnproto-java / sbt find the capnp compiler
       os.environ['PKG_CONFIG_PATH'] = (
