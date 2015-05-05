@@ -40,7 +40,7 @@ Look for messages in stderr about project file locations
 (e.g. for Eclipse CDT).
 
 Notes:
- * Requires internet access for --deps.
+ * Requires internet access for --deps, sbt dependencies, etc.
  * Why not bash scripts? Python is easier to maintain today.
     This script should not be hard to port (if desired) and is
     adequately cross-platform at the moment.
@@ -290,21 +290,12 @@ if __name__ == '__main__':
     # Put capnp execs on the PATH.  TODO: install capnp localling in deps
     DEPS = os.path.abspath('./deps/capnproto/c++/src/capnp')
     os.environ['PATH'] = os.environ.get('PATH', '') + ':' + DEPS
+    # capnp compile -I includes --src-prefix path -o capnp-java-compiler:dest MyCapnpFile.capnp
     run_in_shell(
       CAPNP_COMPILER + " " +
-      "-I ./deps/capnproto/c++/src/ " +
-      "compile ./oarphkit/ok/SVMap/SVMapData.capnp " +
-      " --src-prefix oarphkit/ok/SVMap " + 
-      " -oc++:./oarphkit/ok_msg/")
-    run_in_shell(
-      CAPNP_COMPILER + " " +
-      "-I ./deps/capnproto/c++/src/ " +
-      "compile ./oarphkit/ok/fli/FLiSpec.capnp " +
-      " --src-prefix oarphkit/ok/fli " + 
-      " -oc++:./oarphkit/ok_msg/")
-    run_in_shell(
-      CAPNP_COMPILER + " " +
-      "-I ./deps/capnproto/c++/src/ " +
-      "compile ./oarphkit_test/ok_test/TestMessage.capnp " +
-      " --src-prefix oarphkit_test/ok_test " + 
-      " -oc++:./oarphkit_test/ok_test_msg/")
+      "compile --verbose " +
+      "-I " + os.path.join(CAPNP_JAVA_PATH, 'compiler/src/main/schema/') + " " +
+      "-I " + os.path.join(CAPNP_PATH, 'include/capnp') + " " +
+      "--src-prefix src/main/resources/ " + 
+      "-o " + os.path.join(CAPNP_JAVA_PATH, 'capnpc-java') + ":src/main/java/org/cassievede/msg/capnpm " +
+      "src/main/resources/CVImage.capnp")

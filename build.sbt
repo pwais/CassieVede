@@ -18,6 +18,7 @@ scalaVersion := "2.10.4"
 
 // Allow local repo use
 resolvers += Resolver.mavenLocal
+//resolvers += "Local Maven Repository" at "file://" + Path.userHome.absolutePath + "/.m2/repository"
 
 // Scala Unit Testing
 libraryDependencies += "org.scalatest" %% "scalatest" % "2.2.4" % "test"
@@ -28,7 +29,6 @@ libraryDependencies += "com.novocode" % "junit-interface" % "0.11" % Test
 
 // CLI
 libraryDependencies += "com.github.scopt" %% "scopt" % "3.3.0"
-// resolvers += Resolver.sonatypeRepo("public") still need?
 
 // Spark
 libraryDependencies += "org.apache.spark" %% "spark-core" % "1.3.1"
@@ -38,3 +38,7 @@ libraryDependencies += "com.datastax.cassandra"  % "cassandra-driver-core" % "2.
 
 // Cassandra Test
 libraryDependencies += "org.cassandraunit" % "cassandra-unit" % "2.0.2.2" % "test"
+
+// Captain Proto
+//libraryDependencies += "org.capnproto" % "capnproto-java_2.11" % "0.1.0-SNAPSHOT"
+libraryDependencies += "org.capnproto" % "runtime" % "0.1.0-SNAPSHOT" changing()
