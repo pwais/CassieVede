@@ -64,7 +64,7 @@ class ClassnameMappingDir(
   lazy val allFilepaths: Queue[File] = {
     checkNotNull(rootDir)
     val q = new Queue[File]
-    if (rootDir.exists()) { // Slightly faster
+    if (rootDir.exists()) { // make tests faster
       q ++=
         JavaConversions.asScalaIterator(
             Files.fileTreeTraverser().preOrderTraversal(rootDir).iterator())

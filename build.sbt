@@ -47,6 +47,7 @@ libraryDependencies += "org.apache.spark" %% "spark-core" % "1.3.1"
 
 // Cassandra
 libraryDependencies += "com.datastax.cassandra"  % "cassandra-driver-core" % "2.1.5"
+libraryDependencies += "com.datastax.spark" %% "spark-cassandra-connector" % "1.2.0"
 
 // Cassandra Test
 libraryDependencies += "org.cassandraunit" % "cassandra-unit" % "2.0.2.2" % "test"

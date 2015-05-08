@@ -20,6 +20,8 @@ object Defs {
 
   val CVKeyspaceName = "cassievede"
 
+  val CVImagesTableName = "images"
+
   val Keyspace = """
 CREATE KEYSPACE cassievede
 WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };

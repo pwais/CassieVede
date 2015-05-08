@@ -24,3 +24,17 @@ import scala.collection.mutable.HashMap
  * I.e.  the iterator should provide a means of serializing its state.
  */
 trait Datastream extends Iterator[HashMap[String, Any]] with Serializable
+
+trait DatastreamCheckpointer {
+
+  // Checkpoint the wrapped Datastream and return a version number
+  def checkpoint() : Long
+
+  // Release a version of the wrapped Datastream (i.e. we've successfully
+  // inserted records from it
+  def release(version: Long) : Unit
+
+  // Save state to (or resume from) this local path.  Return true on success
+  def localPath(path: String) : Boolean
+
+}
