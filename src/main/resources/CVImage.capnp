@@ -22,21 +22,33 @@ $Java.package("org.cassievede.msg.capnpm");
 $Java.outerClassname("CVImageProtos");
 
 struct CVImage {
+  
+  // Image key
   datasetid @0 :Int32;
   datasetname @1 :Text;
-  partitionid @2 :UInt64;
-  name @3 :Text;
-  data @4 :Data;
-  classnames @5 :List(Text);
-  width @6 :UInt64;
-  height @7 :UInt64;
-  geoid @8 :UInt64;
-  longitude @9 :Float64;
-  latitude @10 :Float64;
+  partitionid @2 :Int32;
+  id @3 :Data; // UUID bytes
+  
+  // Core data
+  name @4 :Text;
+  data @5 :Data;
+  
+  // Labels
+  classnames @6 :List(Text);
+  binlabels @7 :Data;
+  tags @8 :List(Text);
+  
+  // Attributes
+  width @9 :Int64;
+  height @10 :Int64;
+  geoid @11 :Int64;
+  longitude @12 :Float64;
+  latitude @13 :Float64;
+  uri @14 :Text;
   
   struct ExtraEntry {
     key @0 :Text;
-    value @1 :Data;
+    value @1 :Data; // Capnp-serialized data
   }
-  extra @11 :List(ExtraEntry);
+  extra @15 :List(ExtraEntry);
 }

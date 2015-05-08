@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 # Copyright 2015 Maintainers of CassieVede
 #
@@ -37,7 +37,7 @@ To start fresh, run:
   $ ./bootstrap.py --clean
 
 Look for messages in stderr about project file locations
-(e.g. for Eclipse CDT).
+(e.g. for Eclipse).
 
 Notes:
  * Requires internet access for --deps, sbt dependencies, etc.

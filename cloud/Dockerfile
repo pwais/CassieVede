@@ -55,6 +55,10 @@ RUN apt-get -y install pkg-config build-essential clang llvm lldb-3.4 cmake dh-a
 # Utils
 RUN apt-get -y install git vim curl wget time s3cmd iftop 
 
+# Python
+RUN apt-get -y install python2.7 python-pip
+RUN pip install virtualenv
+
 ADD startup.sh /opt/CassieVedeUtil/startup.sh
 RUN chmod a+x /opt/CassieVedeUtil/startup.sh
 CMD /opt/CassieVedeUtil/startup.sh
