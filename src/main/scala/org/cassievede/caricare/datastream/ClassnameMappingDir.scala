@@ -30,6 +30,7 @@ import org.apache.commons.io.FilenameUtils
 import scala.collection.mutable.Queue
 import scala.collection.JavaConversions
 import org.cassievede.caricare.Utils
+import org.apache.commons.io.FileUtils
 
 object ClassnameMappingDir {
 
@@ -58,18 +59,16 @@ class ClassnameMappingDir(
     rootDir: File,
     accpetedExtensions: HashSet[String] = Constants.imageExtensions) extends Datastream {
 
-  @transient lazy val iterFiles = {
-    checkNotNull(rootDir)
-
-  }
-  @transient private var mNext: HashMap[String, Any] = null
+  private var mNext: HashMap[String, Any] = null
 
   lazy val allFilepaths: Queue[File] = {
     checkNotNull(rootDir)
     val q = new Queue[File]
-    q ++=
-      JavaConversions.asScalaIterator(
-          Files.fileTreeTraverser().preOrderTraversal(rootDir).iterator())
+    if (rootDir.exists()) { // Slightly faster
+      q ++=
+        JavaConversions.asScalaIterator(
+            Files.fileTreeTraverser().preOrderTraversal(rootDir).iterator())
+    }
     q
   }
 
@@ -97,19 +96,14 @@ class ClassnameMappingDir(
     r("name") = ClassnameMappingDir.extractFileName(path)
     r("classnames") = List(ClassnameMappingDir.extractClassname(path))
     r("uri") = f.toURI()
-    r("data") = Utils.download(f.toURI())
+    r("data") = FileUtils.readFileToByteArray(f)
     mNext = r
 
-    /*
-     * Don't pop the file until user has consumed the record so that,
-     * upon a crash, we'll resume with the current file.
-     */
+    // Don't generate this record again
+    allFilepaths.dequeue()
 
     return true
   }
 
-  def next() : HashMap[String, Any] = {
-    allFilepaths.dequeue()
-    mNext
-  }
+  def next() : HashMap[String, Any] = mNext
 }

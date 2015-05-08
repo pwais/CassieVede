@@ -25,6 +25,9 @@ resolvers += Resolver.mavenLocal
 // Scala Unit Testing
 libraryDependencies += "org.scalatest" %% "scalatest" % "2.2.4" % "test"
 
+// More verbose test output
+testOptions in Test += Tests.Argument("-oDF")
+
 // Java Unit Testing
 libraryDependencies += "junit" % "junit" % "4.12" % "test"
 libraryDependencies += "com.novocode" % "junit-interface" % "0.11" % Test

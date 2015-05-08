@@ -39,6 +39,7 @@ object Utils {
     }
   }
 
+  // TODO: keep?
   def download(uri: URI) : ByteBuffer = {
     checkNotNull(uri)
     if (uri.getScheme().equals("file")) {
