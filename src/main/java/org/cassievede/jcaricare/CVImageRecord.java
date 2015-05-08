@@ -86,10 +86,10 @@
 //SVMap should have POD option ..
 //
 //pq:
-// * read a dir of files
-// * unit test it
-// * lazy load file from disk
-// * unit test it
+// x read a dir of files
+// x unit test it
+// x lazy load file from disk
+// x unit test it
 // * load that into spark RDD and then into cassie
 // * unit test it
 // * add cache

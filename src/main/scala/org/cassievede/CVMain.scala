@@ -32,6 +32,8 @@ case class CVSessionConfig(
     doLoad: Boolean = false,
     doDrop: Boolean = false,
 
+    sparkChunkSize: Int = -1,
+    sparkQDepth: Int = -1,
 
     localDir: Boolean = false,
     cassandra: String = "")
@@ -46,7 +48,21 @@ object CVMain {
   val log:Logger = LoggerFactory.getLogger("CVMain")
 
   def doLoad(conf: CVSessionConfig) : Unit = {
-
+  /*
+   * Pipeline(conf):
+   *   - observes caching
+   *   - has an Iterator[Map]
+   *
+   * Loader(conf):
+   *   - consumes from Iterator[Map]
+   *   - load a temp list (by estimated bytes from row.data)
+   *   - in a Future: load list into RDD, parallelize, write to cassie
+   *   - have a queue of Futures, fill to conf depth. if queue full,
+   *      pop and block until a spot opens, then continue. when iter done,
+   *      pope and block till queue empty.
+   *
+   *
+   */
   }
 
   def doDrop(conf: CVSessionConfig) : Unit = {
@@ -93,13 +109,27 @@ object CVMain {
           "(default: java.io.tmpdir/CassieVedeCache)")
 
       ///
+      /// Loading config
+      ///
+      opt[Int]("spark-chunk-size") action {
+        (x, c) => c.copy(sparkChunkSize = x)
+      } text(
+          "Size of a chunk" +
+          "we choose a number equal to the number of Spark workers.")
+      opt[Int]("spark-queue-depth") action {
+        (x, c) => c.copy(sparkQDepth = x)
+      } text(
+          "Number of chunks to load concurrently. By default, " +
+          "we choose a number equal to the number of Spark workers.")
+
+      ///
       /// Other Config
       ///
       opt[String]("dataset") action {
-        (cass, c) => c.copy(dataset = cass)
+        (x, c) => c.copy(dataset = x)
       } text("Use this dataset")
       opt[String]("cassandra") action {
-        (cass, c) => c.copy(cassandra = cass)
+        (x, c) => c.copy(cassandra = x)
       } text("Specify the Cassandra host[:port]")
 
       ///

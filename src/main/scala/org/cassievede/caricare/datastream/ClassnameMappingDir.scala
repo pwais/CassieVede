@@ -14,20 +14,22 @@
  * limitations under the License.
  */
 
-package org.cassievede.caricare
+package org.cassievede.caricare.datastream
 
 import com.google.common.base.Preconditions.checkNotNull
 import java.io.File
 import java.nio.file.Path
-import java.util.ArrayList
 import com.google.common.base.Joiner
 import com.google.common.base.Splitter
 import com.google.common.collect.Lists
 import com.google.common.io.Files
 import scala.collection.mutable.HashMap
-import scala.collection.mutable.HashSet
+import scala.collection.immutable.HashSet
 import org.cassievede.Constants
 import org.apache.commons.io.FilenameUtils
+import scala.collection.mutable.Queue
+import scala.collection.JavaConversions
+import org.cassievede.caricare.Utils
 
 object ClassnameMappingDir {
 
@@ -52,44 +54,62 @@ object ClassnameMappingDir {
  * Generate a sequence of Map records following the schema of
  * the cassievede.image table.
  */
-class ClassnameMappingDir(rootDir: File) extends Iterator[HashMap[String, Any]] {
-  lazy val iterFiles = {
+class ClassnameMappingDir(
+    rootDir: File,
+    accpetedExtensions: HashSet[String] = Constants.imageExtensions) extends Datastream {
+
+  @transient lazy val iterFiles = {
     checkNotNull(rootDir)
-    Files.fileTreeTraverser().preOrderTraversal(rootDir).iterator()
+
   }
-  val accpetedExtensions: HashSet[String] = new HashSet[String]
-  private var mNext: HashMap[String, Any] = null
+  @transient private var mNext: HashMap[String, Any] = null
 
-
-  // Filter results by extension
-  def setAcceptAll() = accpetedExtensions.clear()
-  def setAcceptImages() = accpetedExtensions ++ Constants.imageExtensions
-  def addExtension(ext: String) = accpetedExtensions.add(ext)
-
+  lazy val allFilepaths: Queue[File] = {
+    checkNotNull(rootDir)
+    val q = new Queue[File]
+    q ++=
+      JavaConversions.asScalaIterator(
+          Files.fileTreeTraverser().preOrderTraversal(rootDir).iterator())
+    q
+  }
 
   def hasNext() : Boolean = {
-    if (!iterFiles.hasNext()) { return false }
+    if (allFilepaths.isEmpty) { return false }
 
     // Try to build the next record
-    val f = iterFiles.next()
-    if (!(f.exists() && !f.isDirectory() && f.canRead())) { return hasNext() }
+    val f = allFilepaths.front
+    if (!(f.exists() && !f.isDirectory() && f.canRead())) {
+      mNext = null
+      allFilepaths.dequeue()
+      return hasNext()
+    }
     val path = rootDir.toPath().getParent().relativize(f.toPath())
 
     val ext = FilenameUtils.getExtension(path.toString())
     if (!(accpetedExtensions.isEmpty || accpetedExtensions.contains(ext))) {
       mNext = null
+      allFilepaths.dequeue()
       return hasNext()
     }
 
-    // We can build a record .. do it
+    // We can build a record .. do it!
     val r = new HashMap[String, Any]
     r("name") = ClassnameMappingDir.extractFileName(path)
     r("classnames") = List(ClassnameMappingDir.extractClassname(path))
     r("uri") = f.toURI()
+    r("data") = Utils.download(f.toURI())
     mNext = r
+
+    /*
+     * Don't pop the file until user has consumed the record so that,
+     * upon a crash, we'll resume with the current file.
+     */
 
     return true
   }
 
-  def next() : HashMap[String, Any] = mNext
+  def next() : HashMap[String, Any] = {
+    allFilepaths.dequeue()
+    mNext
+  }
 }

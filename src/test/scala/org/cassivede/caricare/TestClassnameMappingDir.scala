@@ -17,7 +17,7 @@
 package org.cassivede.caricare
 
 import org.scalatest._
-import org.cassievede.caricare.ClassnameMappingDir
+import org.cassievede.caricare.datastream.ClassnameMappingDir
 import java.io.File
 import java.nio.file.Path
 import scala.collection.mutable.HashMap

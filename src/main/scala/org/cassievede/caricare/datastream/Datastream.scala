@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.cassievede
+package org.cassievede.caricare.datastream
 
-import scala.collection.immutable.HashSet
+import scala.collection.mutable.HashMap
 
-object Constants {
-  val imageExtensions = HashSet[String](
-      "gif",
-      "jpg", "jpeg",
-      "png",
-      "tiff")
-}
+/**
+ * A Datastream is an iterator that generates records following the
+ * schema of the cassievede.image table.  Furthermore, a Datastream
+ * is *Serializable* such that it can be resumed after a crash.
+ * I.e.  the iterator should provide a means of serializing its state.
+ */
+trait Datastream extends Iterator[HashMap[String, Any]] with Serializable
