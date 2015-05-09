@@ -17,11 +17,14 @@ package org.cassievede
 
 import org.slf4j._
 import java.io.File
+import scala.collection.immutable.HashSet
+import org.cassievede.caricare.datastream.DataStreamFactory
 
 case class CVSessionConfig(
     stdinCVImage: Boolean = false,
     cnameDirs: Seq[File] = Seq(),
-    dataset: String = "",
+    cnameDirExts: Seq[String] = Constants.imageExtensions.toSeq,
+    dataset: String = null,
 
     cache: Boolean = false,
     resumeCache: Boolean = false,
@@ -32,8 +35,8 @@ case class CVSessionConfig(
     doLoad: Boolean = false,
     doDrop: Boolean = false,
 
-    sparkChunkSize: Int = -1,
-    sparkQDepth: Int = -1,
+    sparkChunkSize: Long = -1,
+    sparkQDepth: Long = -1,
 
     localDir: Boolean = false,
     cassandra: String = "")
@@ -48,6 +51,11 @@ object CVMain {
   val log:Logger = LoggerFactory.getLogger("CVMain")
 
   def doLoad(conf: CVSessionConfig) : Unit = {
+    val stream = DataStreamFactory.createStream(conf)
+    val checkpointer = DataStreamFactory.createCheckpointer(conf, stream)
+
+
+
   /*
    * Pipeline(conf):
    *   - observes caching
@@ -87,20 +95,26 @@ object CVMain {
       ///
       /// Input sources
       ///
-      opt[Boolean]("stdin-cvimage") action { (s, c) => c.copy(stdinCVImage = s)
+      opt[Boolean]("stdin-cvimage") action { (x, c) => c.copy(stdinCVImage = true)
       } text("Read a stream of CVImages from standard in")
-      opt[Seq[File]]("cname-dirs") valueName("<dir1>,<dir2>...") action {
+      opt[Seq[File]]("cname-dirs") valueName("<dir1>, <dir2> ...") action {
         (x, c) => c.copy(cnameDirs = x)
       } text("Walk these directories of class/name/file.ext")
+      opt[Seq[String]]("cname-exts") valueName("<ext1>, <ext2> ...") action {
+        (x, c) => c.copy(cnameDirExts = x)
+      } text(
+          "With --cname-dirs, accept only files with the given extensions. " +
+          "Use the empty string to accept all files.  Default accepted " +
+          "extensions: " + Constants.imageExtensions.toSeq)
 
       ///
       /// Cache
       ///
-      opt[Boolean]("cache") action { (s, c) => c.copy(cache = s)
+      opt[Boolean]("cache") action { (x, c) => c.copy(cache = true)
       } text(
           "When importing files, cache the import job before " +
           "executing in case the import job fails")
-      opt[Boolean]("resume-cache") action { (s, c) => c.copy(resumeCache = s)
+      opt[Boolean]("resume-cache") action { (x, c) => c.copy(resumeCache = true)
       } text("Resume an import job from a local cache.")
       opt[File]("cached-dir") valueName("<dir>") action {
         (x, c) => c.copy(cacheDir = x)
@@ -114,8 +128,9 @@ object CVMain {
       opt[Int]("spark-chunk-size") action {
         (x, c) => c.copy(sparkChunkSize = x)
       } text(
-          "Size of a chunk" +
-          "we choose a number equal to the number of Spark workers.")
+          "Size of a chunk in Megabytes.  By default we allocate 1/2 " +
+          "of the JVM heap to chunks, with each chunk using " +
+          "1 / --spark-queue-depth of the reserved memory.")
       opt[Int]("spark-queue-depth") action {
         (x, c) => c.copy(sparkQDepth = x)
       } text(
@@ -135,11 +150,11 @@ object CVMain {
       ///
       /// Actions
       ///
-      opt[Boolean]("create-keyspace") action { (s, c) => c.copy(doCreateKeyspace = s)
+      opt[Boolean]("create-keyspace") action { (x, c) => c.copy(doCreateKeyspace = true)
       } text("Create the CassieVede keyspace")
-      opt[Boolean]("load") action { (s, c) => c.copy(doLoad = s)
+      opt[Boolean]("load") action { (x, c) => c.copy(doLoad = true)
       } text("Load data from a source")
-      opt[Boolean]("drop") action { (s, c) => c.copy(doDrop = s)
+      opt[Boolean]("drop") action { (x, c) => c.copy(doDrop = true)
       } text("Drop the given dataset")
 
 

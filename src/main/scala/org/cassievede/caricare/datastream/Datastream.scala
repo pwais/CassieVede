@@ -16,6 +16,7 @@
 package org.cassievede.caricare.datastream
 
 import scala.collection.mutable.HashMap
+import java.io.File
 
 /**
  * A Datastream is an iterator that generates records following the
@@ -35,6 +36,6 @@ trait DatastreamCheckpointer {
   def release(version: Long) : Unit
 
   // Save state to (or resume from) this local path.  Return true on success
-  def localPath(path: String) : Boolean
+  def useLocalPath(loc: File) : Boolean
 
 }

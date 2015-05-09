@@ -20,11 +20,8 @@ import org.scalatest._
 import org.cassievede.caricare.datastream.ClassnameMappingDir
 import java.io.File
 import scala.collection.mutable.HashMap
-import java.io.ByteArrayOutputStream
-import java.io.ObjectOutputStream
-import java.io.ByteArrayInputStream
-import java.io.ObjectInputStream
 import java.net.URI
+import org.apache.commons.lang3.SerializationUtils
 
 class ClassnameMappingDirSpec extends FlatSpec with Matchers {
 
@@ -120,13 +117,9 @@ class ClassnameMappingDirSpec extends FlatSpec with Matchers {
     root.exists() should be (true)
 
     val serDeser = (i: ClassnameMappingDir) => {
-      val bo = new ByteArrayOutputStream()
-      val so = new ObjectOutputStream(bo)
-      so.writeObject(i)
-      so.flush()
-      val bi = new ByteArrayInputStream(bo.toByteArray())
-      val si = new ObjectInputStream(bi)
-      si.readObject().asInstanceOf[ClassnameMappingDir]
+      SerializationUtils
+        .deserialize(SerializationUtils.serialize(i))
+        .asInstanceOf[ClassnameMappingDir]
     }
 
     val expected = HashMap() ++= kExpected
