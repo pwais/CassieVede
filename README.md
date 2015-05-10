@@ -2,12 +2,12 @@ CassieVede
 ==========
 
 "Cassandra Sees."  A utility for managing datasets of images in
-[Cassandra](http://cassandra.apache.org/).
+[Cassandra](http:cassandra.apache.org/).
 
 Quickstart
 ==========
 
-1. [Install sbt](http://www.scala-sbt.org/release/tutorial/Setup.html)
+1. [Install sbt](http:www.scala-sbt.org/release/tutorial/Setup.html)
 (e.g. `$ sudo port install sbt`).
 
 2. `$ sbt eclipse with-source=true` to generate Eclipse project files
@@ -58,4 +58,31 @@ instead of:
 CLibrary: Unable to lock JVM memory (ENOMEM). This can result in part of the JVM being swapped out, especially with mmapped I/O enabled. ...
 ```
 
-discuss decision about images and file size is ok
+TODO
+====
+
+docs: discuss decision about images and file size is ok
+
+pq:
+ x read a dir of files
+ x unit test it
+ x lazy load file from disk
+ x unit test it 
+ * load that into spark RDD and then into cassie
+ * unit test it
+ x add cache
+ * unit test it
+ x add async spark parallelize() and save() with a queue of futures,
+ max queue length from command line (default to num spark machines)
+ * manual test it
+ * add ssh tunel
+ * manual test it
+ * read a tar file
+ * unit test it  
+ * test loading imagenet tiny into gce
+ * zip and tarfile stuff
+ * tiny imagenet stuff
+ * sweep commented crap
+ * squash 
+
+

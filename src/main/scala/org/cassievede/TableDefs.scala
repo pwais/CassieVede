@@ -16,11 +16,13 @@
 
 package org.cassievede
 
-object Defs {
+object TableDefs {
 
   val CVKeyspaceName = "cassievede"
 
   val CVImagesTableName = "images"
+
+  val CVDatasetTableName = "dataset"
 
   val Keyspace = """
 CREATE KEYSPACE cassievede

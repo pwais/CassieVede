@@ -18,7 +18,10 @@ package org.cassievede
 import org.slf4j._
 import java.io.File
 import scala.collection.immutable.HashSet
+import com.datastax.driver.core.Cluster
+import com.datastax.driver.core.Session
 import org.cassievede.caricare.datastream.DataStreamFactory
+import org.cassievede.caricare.LoaderQueue
 
 case class CVSessionConfig(
     stdinCVImage: Boolean = false,
@@ -32,8 +35,9 @@ case class CVSessionConfig(
       new File(System.getProperty("java.io.tmpdir"), "CassieVedeCache"),
 
     doCreateKeyspace: Boolean = false,
+    doCreateDataset: Boolean = false,
     doLoad: Boolean = false,
-    doDrop: Boolean = false,
+    doDropDataset: Boolean = false,
 
     sparkChunkSize: Long = -1,
     sparkQDepth: Long = -1,
@@ -50,40 +54,39 @@ object CVMain {
 
   val log:Logger = LoggerFactory.getLogger("CVMain")
 
-  def doLoad(conf: CVSessionConfig) : Unit = {
-    val stream = DataStreamFactory.createStream(conf)
-    val checkpointer = DataStreamFactory.createCheckpointer(conf, stream)
-
-
-
-  /*
-   * Pipeline(conf):
-   *   - observes caching
-   *   - has an Iterator[Map]
-   *
-   * Loader(conf):
-   *   - consumes from Iterator[Map]
-   *   - load a temp list (by estimated bytes from row.data)
-   *   - in a Future: load list into RDD, parallelize, write to cassie
-   *   - have a queue of Futures, fill to conf depth. if queue full,
-   *      pop and block until a spot opens, then continue. when iter done,
-   *      pope and block till queue empty.
-   *
-   *
-   */
-  }
-
-  def doDrop(conf: CVSessionConfig) : Unit = {
-
-  }
-
-  def doCreateKS(conf: CVSessionConfig) : Unit = {
+  def createSession(conf: CVSessionConfig) : Session = {
     val toks = conf.cassandra.split(":")
     val host = if (!toks(0).isEmpty()) { toks(0) } else { "127.0.0.1" }
     val port = if (toks.size > 1) { toks(0).toInt } else { 9142 }
 
-    log.info("Creating Cassie Keyspace and Tables")
-    DBUtil.CreateCassie(host, port)
+    val cluster =
+      Cluster.builder().addContactPoint(host).withPort(port).build()
+    return cluster.newSession()
+  }
+
+  def doLoad(conf: CVSessionConfig) : Unit = {
+    val stream = DataStreamFactory.createStream(conf)
+    val checkpointer = DataStreamFactory.createCheckpointer(conf, stream)
+    val q = new LoaderQueue(conf, stream, checkpointer)
+    q.run()
+  }
+
+  def doCreateDataset(conf: CVSessionConfig) : Unit = {
+    val d = new DBUtil(createSession(conf))
+    d.createDataset(conf.dataset)
+    log.info("Created dataset: " + conf.dataset)
+  }
+
+  def doDropDataset(conf: CVSessionConfig) : Unit = {
+    val d = new DBUtil(createSession(conf))
+    d.dropDataset(conf.dataset)
+    log.info("Deleted all data for dataset: " + conf.dataset)
+  }
+
+  def doCreateKS(conf: CVSessionConfig) : Unit = {
+    val d = new DBUtil(createSession(conf))
+    d.createTables()
+    log.info("Created Cassie Keyspace and Tables")
   }
 
   def main(args: Array[String]) : Unit = {
@@ -154,7 +157,9 @@ object CVMain {
       } text("Create the CassieVede keyspace")
       opt[Boolean]("load") action { (x, c) => c.copy(doLoad = true)
       } text("Load data from a source")
-      opt[Boolean]("drop") action { (x, c) => c.copy(doDrop = true)
+      opt[Boolean]("create") action { (x, c) => c.copy(doCreateDataset = true)
+      } text("Create the given dataset")
+      opt[Boolean]("drop") action { (x, c) => c.copy(doDropDataset = true)
       } text("Drop the given dataset")
 
 
@@ -198,8 +203,10 @@ object CVMain {
     val conf = mconf.get
     if (conf.doCreateKeyspace) {
       doCreateKS(conf)
-    } else if (conf.doDrop) {
-      doDrop(conf)
+    } else if (conf.doCreateDataset) {
+      doCreateDataset(conf)
+    } else if (conf.doDropDataset) {
+      doDropDataset(conf)
     } else if (conf.doLoad) {
       doLoad(conf)
     } else {

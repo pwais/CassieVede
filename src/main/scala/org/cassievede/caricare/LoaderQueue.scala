@@ -25,7 +25,7 @@ import scala.collection.mutable.Queue
 import org.apache.spark.SparkContext
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.MutableList
-import org.cassievede.Defs
+import org.cassievede.TableDefs
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
@@ -97,7 +97,7 @@ class LoaderQueue(
         if (checkpointer == null) { 1 } else { checkpointer.checkpoint() }
       val task = Future {
         val c = new ChunkLoader()
-        c.load(curChunk, Defs.CVKeyspaceName, Defs.CVImagesTableName)
+        c.load(curChunk, TableDefs.CVKeyspaceName, TableDefs.CVImagesTableName)
       }
       taskQueue += VersionedTask(version, task)
       log.debug("... enqueued task.")
