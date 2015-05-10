@@ -80,6 +80,9 @@ if __name__ == '__main__':
   config_group.add_option(
     '--docker-tag', type="string", default='cassievedebox',
     help="Give the Docker dev container this tag [default: %default]")
+  config_group.add_option(
+    '--docker-name', type="string", default='cassievedebox',
+    help="Give the Docker dev container instance this name [default: %default]")
   option_parser.add_option_group(config_group)
   
   actions_group = OptionGroup(
@@ -121,6 +124,9 @@ if __name__ == '__main__':
     help="Drop into a Dockerized bash shell with the current project's "
          "source mounted inside.  Then, for example, try "
          "bootstrapy.py --all to build inside Docker.")
+  actions_group.add_option(
+    '--docker-rm', default=False, action='store_true',
+    help="Remove the Docker container started by --indocker")
   option_parser.add_option_group(actions_group)
   
   opts, args = option_parser.parse_args()
@@ -267,7 +273,7 @@ if __name__ == '__main__':
     run_in_shell(
       "cd cloud && docker build -t " + opts.docker_tag + " .")
   
-  if opts.indocker:  
+  if opts.indocker: 
     log.info("Dropping into Dockerized bash ...")
     # Only mount the source, not e.g. build or deps, which can't
     # be shared.
@@ -282,11 +288,15 @@ if __name__ == '__main__':
     docker_cmd = (
       "docker run -it " +
         "-w /opt/CassieVede " +
-        "--name cassievedebox " +
+        "--name " + opts.docker_name + " " +
         " ".join(("-v " + src + ":" + dst) for (src, dst) in vol_maps) + " " +
         opts.docker_tag + " bash")
     log.info("command: " + docker_cmd)
     os.execvp("docker", docker_cmd.split(" "))
+  
+  if opts.docker_rm:
+    run_in_shell(
+      "docker kill " + opts.docker_name + " && docker rm " + opts.docker_name)
 
   ##
   ## SERDE (Re-)Generation

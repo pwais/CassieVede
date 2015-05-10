@@ -14,7 +14,7 @@
 
 organization := "org.cassievede"
 version := "0.0.1"
-scalaVersion := "2.10.4"
+scalaVersion := "2.10.5"
 name := "cassievede"
 
 
@@ -46,6 +46,7 @@ libraryDependencies += "org.apache.commons" % "commons-lang3" % "3.4"
 libraryDependencies += "org.apache.spark" %% "spark-core" % "1.3.1"
 
 // Cassandra
+libraryDependencies += "org.apache.cassandra" % "cassandra-all" % "2.1.5" // Fix silly build bug
 libraryDependencies += "com.datastax.cassandra"  % "cassandra-driver-core" % "2.1.5"
 libraryDependencies += "com.datastax.spark" %% "spark-cassandra-connector" % "1.2.0"
 

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM ubuntu:trusty-20150320
+FROM ubuntu:trusty
 
 RUN apt-get update
 
@@ -39,9 +39,9 @@ RUN echo "deb http://dl.bintray.com/sbt/debian /" >> /etc/apt/sources.list.d/sbt
     apt-get install --force-yes -y sbt && \
 	sbt help
 
-# Warm up sbt dependencies
-ADD CassieVedeSBTInit /opt/CassieVedeSBTInit
-RUN cd /opt/CassieVedeSBTInit && sbt update
+## Warm up sbt dependencies
+#ADD CassieVedeSBTInit /opt/CassieVedeSBTInit
+#RUN cd /opt/CassieVedeSBTInit && sbt update
 
 # Captain Proto build dependencies
 RUN apt-get -y install pkg-config build-essential clang llvm lldb-3.4 cmake dh-autoreconf libc++abi-dev libc++-dev

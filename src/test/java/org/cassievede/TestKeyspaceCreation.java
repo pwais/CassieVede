@@ -28,6 +28,8 @@ import org.junit.Test;
 
 import com.datastax.driver.core.ResultSet;
 
+import org.cassievede.TableDefs;
+
 public class TestKeyspaceCreation {
   
   public static class TableDefsCQLDataSet implements CQLDataSet {
@@ -35,15 +37,15 @@ public class TestKeyspaceCreation {
     @Override
     public List<String> getCQLStatements() {
       ArrayList<String> s = new ArrayList<String>();
-      s.add(Defs.Keyspace());
-      s.add(Defs.DatasetTable());
-      s.add(Defs.ImageTable());
+      s.add(TableDefs.Keyspace());
+      s.add(TableDefs.DatasetTable());
+      s.add(TableDefs.ImageTable());
       return s;
     }
 
     @Override
     public String getKeyspaceName() {
-      return Defs.CVKeyspaceName();
+      return TableDefs.CVKeyspaceName();
     }
 
     @Override
