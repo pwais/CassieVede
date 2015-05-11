@@ -208,7 +208,7 @@ if __name__ == '__main__':
          os.environ.get('PATH', '') + ':' + os.path.join(CAPNP_PATH, 'bin/'))
       run_in_shell(
         "cd " + CAPNP_JAVA_PATH + " && "
-        "make && sbt compile test package publishLocal")
+        "make && sbt compile test assembly publishLocal")
     
   
   
@@ -286,7 +286,7 @@ if __name__ == '__main__':
       (os.path.abspath('.git'), '/opt/CassieVede/.git'),
       (os.path.abspath('.gitmodules'), '/opt/CassieVede/.gitmodules'),)
     docker_cmd = (
-      "docker run -it " +
+      "docker run -it -p 9042:9042 " +
         "-w /opt/CassieVede " +
         "--name " + opts.docker_name + " " +
         " ".join(("-v " + src + ":" + dst) for (src, dst) in vol_maps) + " " +

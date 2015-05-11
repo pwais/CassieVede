@@ -10,8 +10,7 @@ Quickstart
 1. [Install sbt](http:www.scala-sbt.org/release/tutorial/Setup.html)
 (e.g. `$ sudo port install sbt`).
 
-2. `$ sbt eclipse with-source=true` to generate Eclipse project files
-with source attachment.
+2. `$ ./bootstrap.py --all` to run a complete build; see `--help` FMI.
 
 Running in Docker
 =================

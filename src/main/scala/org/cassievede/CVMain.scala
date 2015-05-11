@@ -52,44 +52,60 @@ case class CVSessionConfig(
 
 object CVMain {
 
-  val log:Logger = LoggerFactory.getLogger("CVMain")
+  val log: Logger = LoggerFactory.getLogger("CVMain")
 
-  def createSession(conf: CVSessionConfig) : Session = {
+  def createCluster(conf: CVSessionConfig) : Cluster = {
     val toks = conf.cassandra.split(":")
     val host = if (!toks(0).isEmpty()) { toks(0) } else { "127.0.0.1" }
-    val port = if (toks.size > 1) { toks(0).toInt } else { 9142 }
-
-    val cluster =
-      Cluster.builder().addContactPoint(host).withPort(port).build()
-    return cluster.newSession()
+    val port = if (toks.size > 1) { toks(0).toInt } else { 9042 }
+    return Cluster.builder().addContactPoint(host).withPort(port).build()
   }
 
-  def doLoad(conf: CVSessionConfig) : Unit = {
+  def safeExec(conf: CVSessionConfig, f: DBUtil => Unit) = {
+    val c = createCluster(conf)
+    try {
+      val d = new DBUtil(c.newSession())
+      f(d)
+    } finally {
+      c.close()
+    }
+  }
+
+  def doLoad(conf: CVSessionConfig) = {
     val stream = DataStreamFactory.createStream(conf)
     val checkpointer = DataStreamFactory.createCheckpointer(conf, stream)
     val q = new LoaderQueue(conf, stream, checkpointer)
     q.run()
   }
 
-  def doCreateDataset(conf: CVSessionConfig) : Unit = {
-    val d = new DBUtil(createSession(conf))
-    d.createDataset(conf.dataset)
-    log.info("Created dataset: " + conf.dataset)
+  def doCreateDataset(conf: CVSessionConfig) = {
+    safeExec(
+      conf,
+      (d: DBUtil) => {
+        d.createDataset(conf.dataset)
+        log.info("Created dataset: " + conf.dataset)
+      })
   }
 
-  def doDropDataset(conf: CVSessionConfig) : Unit = {
-    val d = new DBUtil(createSession(conf))
-    d.dropDataset(conf.dataset)
-    log.info("Deleted all data for dataset: " + conf.dataset)
+  def doDropDataset(conf: CVSessionConfig) = {
+    safeExec(
+      conf,
+      (d: DBUtil) => {
+        d.dropDataset(conf.dataset)
+        log.info("Deleted all data for dataset: " + conf.dataset)
+      })
   }
 
-  def doCreateKS(conf: CVSessionConfig) : Unit = {
-    val d = new DBUtil(createSession(conf))
-    d.createTables()
-    log.info("Created Cassie Keyspace and Tables")
+  def doCreateKS(conf: CVSessionConfig) = {
+    safeExec(
+      conf,
+      (d: DBUtil) => {
+        d.createTables()
+        log.info("Created Cassie Keyspace and Tables")
+      })
   }
 
-  def main(args: Array[String]) : Unit = {
+  def main(args: Array[String]) = {
 
     val parser = new scopt.OptionParser[CVSessionConfig]("CassieVedeCLI") {
       head("CassieVedeCLI: A utility for image data loading with CassieVede")
@@ -98,7 +114,7 @@ object CVMain {
       ///
       /// Input sources
       ///
-      opt[Boolean]("stdin-cvimage") action { (x, c) => c.copy(stdinCVImage = true)
+      opt[Unit]("stdin-cvimage") action { (x, c) => c.copy(stdinCVImage = true)
       } text("Read a stream of CVImages from standard in")
       opt[Seq[File]]("cname-dirs") valueName("<dir1>, <dir2> ...") action {
         (x, c) => c.copy(cnameDirs = x)
@@ -113,11 +129,11 @@ object CVMain {
       ///
       /// Cache
       ///
-      opt[Boolean]("cache") action { (x, c) => c.copy(cache = true)
+      opt[Unit]("cache") action { (x, c) => c.copy(cache = true)
       } text(
           "When importing files, cache the import job before " +
           "executing in case the import job fails")
-      opt[Boolean]("resume-cache") action { (x, c) => c.copy(resumeCache = true)
+      opt[Unit]("resume-cache") action { (x, c) => c.copy(resumeCache = true)
       } text("Resume an import job from a local cache.")
       opt[File]("cached-dir") valueName("<dir>") action {
         (x, c) => c.copy(cacheDir = x)
@@ -153,13 +169,13 @@ object CVMain {
       ///
       /// Actions
       ///
-      opt[Boolean]("create-keyspace") action { (x, c) => c.copy(doCreateKeyspace = true)
+      opt[Unit]("create-keyspace") action { (x, c) => c.copy(doCreateKeyspace = true)
       } text("Create the CassieVede keyspace")
-      opt[Boolean]("load") action { (x, c) => c.copy(doLoad = true)
+      opt[Unit]("load") action { (x, c) => c.copy(doLoad = true)
       } text("Load data from a source")
-      opt[Boolean]("create") action { (x, c) => c.copy(doCreateDataset = true)
+      opt[Unit]("create") action { (x, c) => c.copy(doCreateDataset = true)
       } text("Create the given dataset")
-      opt[Boolean]("drop") action { (x, c) => c.copy(doDropDataset = true)
+      opt[Unit]("drop") action { (x, c) => c.copy(doDropDataset = true)
       } text("Drop the given dataset")
 
 
@@ -198,7 +214,7 @@ object CVMain {
 
     // parser.parse returns Option[CVSessionConfig]
     val mconf = parser.parse(args, CVSessionConfig())
-    if (!mconf.isDefined) return
+    if (!mconf.isDefined) sys.exit(1)
 
     val conf = mconf.get
     if (conf.doCreateKeyspace) {

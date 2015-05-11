@@ -19,6 +19,10 @@ package org.cassievede
 import com.datastax.driver.core.Session
 import com.datastax.driver.core.querybuilder.QueryBuilder
 import com.datastax.driver.core.querybuilder.QueryBuilder.eq
+import com.google.common.collect.BiMap
+import com.google.common.collect.HashBiMap
+import com.datastax.driver.core.Row
+import scala.collection.JavaConversions
 
 class DBUtil(session: Session) {
 
@@ -28,25 +32,44 @@ class DBUtil(session: Session) {
     session.execute(TableDefs.ImageTable)
   }
 
-  def getIdForDataset(datasetName: String) : Long = {
-    val r = session.execute(
+  def getDatasetIdMap() : BiMap[String, Int] = {
+    val result = session.execute(
         QueryBuilder
-          .select("id")
-          .from(TableDefs.CVKeyspaceName, TableDefs.CVDatasetTableName)
-          .where(QueryBuilder.eq("name", datasetName)))
-    return r.one().getLong("id")
+          .select()
+          .all()
+          .from(TableDefs.CVKeyspaceName, TableDefs.CVDatasetTableName))
+    val m = HashBiMap.create[String, Int]()
+    JavaConversions
+      .asScalaIterator[Row](result.iterator)
+      .foreach(r => m.put(r.getString("name"), r.getInt("id")))
+    return m
   }
 
   def createDataset(datasetName: String) = {
+    val dToID = getDatasetIdMap()
+    require(
+      !dToID.containsKey(datasetName),
+      "Dataset " + datasetName + " already exists!")
+
+    val maxId =
+      if (dToID.values().isEmpty()) {
+        0
+      } else {
+        JavaConversions.asScalaSet[Int](dToID.values()).max
+      }
+    val newId = maxId + 1
+
     val exp =
       QueryBuilder
       .insertInto(TableDefs.CVKeyspaceName, TableDefs.CVDatasetTableName)
       .value("name", datasetName)
+      .value("id", newId)
     session.execute(exp)
   }
 
   def dropDataset(datasetName: String) = {
-    val datasetId = getIdForDataset(datasetName)
+    val dToID = getDatasetIdMap()
+    val datasetId = dToID.get(datasetName)
     session.execute(
         QueryBuilder
         .delete()

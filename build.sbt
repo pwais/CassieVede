@@ -17,7 +17,7 @@ version := "0.0.1"
 scalaVersion := "2.10.5"
 name := "cassievede"
 
-
+mainClass in assembly := Some("org.cassievede.CVMain")
 
 // Allow local repo use
 resolvers += Resolver.mavenLocal
@@ -36,14 +36,15 @@ libraryDependencies += "com.novocode" % "junit-interface" % "0.11" % Test
 libraryDependencies += "com.github.scopt" %% "scopt" % "3.3.0"
 
 // Loggy
-libraryDependencies += "org.slf4j" % "slf4j-api" % "1.7.9"
-libraryDependencies += "org.slf4j" % "slf4j-simple" % "1.7.9"
+libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.0.13"
+//libraryDependencies += "org.slf4j" % "slf4j-api" % "1.7.9"
+//libraryDependencies += "org.slf4j" % "slf4j-simple" % "1.7.9"
 
 // Debugging
 libraryDependencies += "org.apache.commons" % "commons-lang3" % "3.4"
 
 // Spark
-libraryDependencies += "org.apache.spark" %% "spark-core" % "1.3.1"
+//libraryDependencies += "org.apache.spark" %% "spark-core" % "1.3.1"
 
 // Cassandra
 libraryDependencies += "org.apache.cassandra" % "cassandra-all" % "2.1.5" // Fix silly build bug
