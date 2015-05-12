@@ -81,7 +81,7 @@ if __name__ == '__main__':
     '--docker-tag', type="string", default='cassievedebox',
     help="Give the Docker dev container this tag [default: %default]")
   config_group.add_option(
-    '--docker-name', type="string", default='cassievedebox',
+    '--docker-name', type="string", default='cv',
     help="Give the Docker dev container instance this name [default: %default]")
   option_parser.add_option_group(config_group)
   
@@ -125,7 +125,12 @@ if __name__ == '__main__':
          "source mounted inside.  Then, for example, try "
          "bootstrapy.py --all to build inside Docker.")
   actions_group.add_option(
-    '--docker-rm', default=False, action='store_true',
+    '--docker-run', default=False, action='store_true',
+    help="Start a local Spark & Cassandra instance inside the Docker "
+         "container (e.g. to use for testing code built outside the "
+         "container).")
+  actions_group.add_option(
+    '--rm-docker', default=False, action='store_true',
     help="Remove the Docker container started by --indocker")
   option_parser.add_option_group(actions_group)
   
@@ -273,28 +278,97 @@ if __name__ == '__main__':
     run_in_shell(
       "cd cloud && docker build -t " + opts.docker_tag + " .")
   
-  if opts.indocker: 
-    log.info("Dropping into Dockerized bash ...")
-    # Only mount the source, not e.g. build or deps, which can't
-    # be shared.
+  def start_docker():
+    
+    # Are we already running?
+    is_running = False
+    try:
+      subprocess.check_call(
+        "docker inspect " + opts.docker_name,
+        shell=True,
+        stdout=open(os.devnull, 'w'),
+        stderr=open(os.devnull, 'w'))
+      is_running = True
+    except subprocess.CalledProcessError:
+      # We're not running yet!
+      pass
+    
+    if is_running:
+      log.info("Container " + opts.docker_name + " already running")
+      return
+    
+    log.info("Starting Dockerized Spark & Cassandra ...")
+    
+    # Do NOT mount:
+    # * deps -- they must be compiled for the container
+    # * target -- should be compiled for container
     vol_maps = (
-      (os.path.abspath('src'), '/opt/CassieVede/src'),
-  		(os.path.abspath('build.sbt'), '/opt/CassieVede/build.sbt'),
-  		(os.path.abspath('LICENSE'), '/opt/CassieVede/LICENSE'),
-  		(os.path.abspath('project'), '/opt/CassieVede/project'),
+      # Allow bootstrap.py to run inside container
+      (os.path.abspath('LICENSE'), '/opt/CassieVede/LICENSE'),
       (os.path.abspath('bootstrap.py'), '/opt/CassieVede/bootstrap.py'),
+      
+      # Mount as much of the project as needed to build it
+      (os.path.abspath('src'), '/opt/CassieVede/src'),
+      (os.path.abspath('build.sbt'), '/opt/CassieVede/build.sbt'),
+      (os.path.abspath('project'), '/opt/CassieVede/project'),
       (os.path.abspath('.git'), '/opt/CassieVede/.git'),
-      (os.path.abspath('.gitmodules'), '/opt/CassieVede/.gitmodules'),)
+      (os.path.abspath('.gitmodules'), '/opt/CassieVede/.gitmodules'),
+      
+      # Mount local Ivy/Maven repos to dramatically accelerate build
+      (os.path.join(os.path.expanduser('~'), '.ivy2'), '/root/.ivy2'),
+      (os.path.join(os.path.expanduser('~'), '.m2'), '/root/.m2'),)
     docker_cmd = (
-      "docker run -it -p 9042:9042 " +
+      "docker run -d -t -p 9042:9042 -p 8080:8080 -p 8081:8081 " +
         "-w /opt/CassieVede " +
+        "--cap-add SYS_ADMIN --device /dev/fuse " +
         "--name " + opts.docker_name + " " +
         " ".join(("-v " + src + ":" + dst) for (src, dst) in vol_maps) + " " +
-        opts.docker_tag + " bash")
+        opts.docker_tag)
+    run_in_shell(docker_cmd)
+  
+  if opts.docker_run:
+    start_docker()
+    if platform.system() == 'Darwin':
+      log.info(
+         "We need for forward the Cassandra port on boot2docker's "
+         "VirtualBox host so that we can connect to it from "
+         "this machine")
+      print >> sys.stderr, \
+        """
+        ************************************************
+        ************************************************
+         
+        If you want to access Cassandra or the Spark 
+        WebUI from this host, you need to forward ports
+        on boot2docker's VirtualBox instance.  Run the
+        following to open ports for Cassandra (CQL)
+        and Spark WebUIs, respectively:
+        
+          VBoxManage controlvm "boot2docker-vm" natpf1 "tcp-port9042,tcp,,9042,,9042";
+          VBoxManage controlvm "boot2docker-vm" natpf1 "tcp-port8080,tcp,,8080,,8080";
+          VBoxManage controlvm "boot2docker-vm" natpf1 "tcp-port8081,tcp,,8081,,8081";
+        
+        Note that these settings are sticky for the 
+        boot2docker VM.
+        
+        Once set, you should be able to:
+         * Run CassieVede against the container's
+           Cassandra instance (e.g. use the default
+           `--cassandra localhost` setting in the CLI)
+         * Access the Spark WebUI at:
+            http://localhost:8080/
+        
+        ************************************************
+        ************************************************
+        """
+
+  if opts.indocker:
+    start_docker()
+    docker_cmd = "docker exec -it " + opts.docker_name + " bash"
     log.info("command: " + docker_cmd)
     os.execvp("docker", docker_cmd.split(" "))
   
-  if opts.docker_rm:
+  if opts.rm_docker:
     run_in_shell(
       "docker kill " + opts.docker_name + " && docker rm " + opts.docker_name)
 
@@ -303,7 +377,6 @@ if __name__ == '__main__':
   ##
   
   if opts.proto_capnp:
-    # TODO: eventually we may merge this into CMake
     CAPNP_COMPILER = os.path.abspath(
                         os.path.join(CAPNP_PATH, 'c++/src/capnp/capnp'))
     # Put capnp execs on the PATH.  TODO: install capnp localling in deps

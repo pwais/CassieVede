@@ -17,7 +17,7 @@
 package org.cassivede.caricare.datastream
 
 import org.scalatest._
-import org.cassievede.caricare.datastream.ClassnameMappingDir
+import org.cassievede.caricare.datastream.ClassnameMappingDirStream
 import java.io.File
 import scala.collection.mutable.HashMap
 import java.net.URI
@@ -30,14 +30,14 @@ class ClassnameMappingDirSpec extends FlatSpec with Matchers {
     val noExiste = new URI(existe.toString() + "/moof")
     val f = new File(noExiste.getPath())
     f.exists() should be (false)
-    val iter = new ClassnameMappingDir(f)
+    val iter = new ClassnameMappingDirStream(f)
     iter.hasNext() should be (false)
   }
 
   it should "extract classnames" in {
     val toPath = (s: String) => { (new File(s)).toPath() }
     val toClassname = (s: String) => {
-      ClassnameMappingDir.extractClassname(toPath(s))
+      ClassnameMappingDirStream.extractClassname(toPath(s))
     }
 
     // Windows? Sorry for you mang
@@ -53,7 +53,7 @@ class ClassnameMappingDirSpec extends FlatSpec with Matchers {
   it should "extract filenames" in {
     val toPath = (s: String) => { (new File(s)).toPath() }
     val toFileName = (s: String) => {
-      ClassnameMappingDir.extractFileName(toPath(s))
+      ClassnameMappingDirStream.extractFileName(toPath(s))
     }
 
     // Windows? Sorry for you mang
@@ -85,7 +85,7 @@ class ClassnameMappingDirSpec extends FlatSpec with Matchers {
     root.exists() should be (true)
 
     val expected = HashMap() ++= kExpected
-    val iter = new ClassnameMappingDir(root)
+    val iter = new ClassnameMappingDirStream(root)
     for (r <- iter) {
       r contains "name" should be (true)
       r contains "classnames" should be (true)
@@ -104,7 +104,7 @@ class ClassnameMappingDirSpec extends FlatSpec with Matchers {
     val root = new File(this.getClass().getResource("/images").toURI())
     root.exists() should be (true)
 
-    val iter = new ClassnameMappingDir(root)
+    val iter = new ClassnameMappingDirStream(root)
     for (r <- iter) {
       r contains "name" should be (true)
       val k = r("name").asInstanceOf[String]
@@ -116,10 +116,10 @@ class ClassnameMappingDirSpec extends FlatSpec with Matchers {
     val root = new File(this.getClass().getResource("/images/root").toURI())
     root.exists() should be (true)
 
-    val serDeser = (i: ClassnameMappingDir) => {
+    val serDeser = (i: ClassnameMappingDirStream) => {
       SerializationUtils
         .deserialize(SerializationUtils.serialize(i))
-        .asInstanceOf[ClassnameMappingDir]
+        .asInstanceOf[ClassnameMappingDirStream]
     }
 
     val expected = HashMap() ++= kExpected
@@ -130,7 +130,7 @@ class ClassnameMappingDirSpec extends FlatSpec with Matchers {
       expected -= k
     }
 
-    var iter = new ClassnameMappingDir(root)
+    var iter = new ClassnameMappingDirStream(root)
     iter = serDeser(iter)
     while (iter.hasNext()) {
       iter = serDeser(iter)

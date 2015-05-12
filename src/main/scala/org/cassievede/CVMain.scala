@@ -43,7 +43,8 @@ case class CVSessionConfig(
     sparkQDepth: Long = -1,
 
     localDir: Boolean = false,
-    cassandra: String = "")
+    cassandra: String = "",
+    spark: String = "") // TODO keepme?
 
 //    foo: Int = -1, out: File = new File("."), xyz: Boolean = false,
 //  libName: String = "", maxCount: Int = -1, verbose: Boolean = false, debug: Boolean = false,
@@ -54,15 +55,8 @@ object CVMain {
 
   val log: Logger = LoggerFactory.getLogger("CVMain")
 
-  def createCluster(conf: CVSessionConfig) : Cluster = {
-    val toks = conf.cassandra.split(":")
-    val host = if (!toks(0).isEmpty()) { toks(0) } else { "127.0.0.1" }
-    val port = if (toks.size > 1) { toks(0).toInt } else { 9042 }
-    return Cluster.builder().addContactPoint(host).withPort(port).build()
-  }
-
   def safeExec(conf: CVSessionConfig, f: DBUtil => Unit) = {
-    val c = createCluster(conf)
+    val c = DBUtil.createCluster(conf)
     try {
       val d = new DBUtil(c.newSession())
       f(d)
@@ -164,7 +158,10 @@ object CVMain {
       } text("Use this dataset")
       opt[String]("cassandra") action {
         (x, c) => c.copy(cassandra = x)
-      } text("Specify the Cassandra host[:port]")
+      } text("Specify the Cassandra host[:port] (default: localhost)")
+      opt[String]("spark") action {
+        (x, c) => c.copy(spark = x)
+      } text("Specify the Spark Master host (default: localhost)")
 
       ///
       /// Actions

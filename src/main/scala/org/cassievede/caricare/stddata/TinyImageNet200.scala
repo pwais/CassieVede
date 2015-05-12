@@ -18,6 +18,13 @@
 //
 //object TinyImageNet200 extends StandardDataset {
 //
+//  def datasetNames() : List[String] = {
+//    List(
+//      "TinyImagenet200.train",
+//      "TinyImagenet200.val",
+//      "TinyImagenet200.test")
+//  }
+//
 //  val fileUri = "http://cs231n.stanford.edu/tiny-imagenet-200.zip"
 //
 //  val streamable = false; // We have to do two passes; one to extract labels

@@ -23,6 +23,16 @@ import com.google.common.collect.BiMap
 import com.google.common.collect.HashBiMap
 import com.datastax.driver.core.Row
 import scala.collection.JavaConversions
+import com.datastax.driver.core.Cluster
+
+object DBUtil {
+  def createCluster(conf: CVSessionConfig) : Cluster = {
+    val toks = conf.cassandra.split(":")
+    val host = if (!toks(0).isEmpty()) { toks(0) } else { "127.0.0.1" }
+    val port = if (toks.size > 1) { toks(0).toInt } else { 9042 }
+    return Cluster.builder().addContactPoint(host).withPort(port).build()
+  }
+}
 
 class DBUtil(session: Session) {
 

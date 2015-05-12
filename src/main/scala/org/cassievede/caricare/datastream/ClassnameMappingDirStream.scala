@@ -32,7 +32,7 @@ import scala.collection.JavaConversions
 import org.cassievede.caricare.Utils
 import org.apache.commons.io.FileUtils
 
-object ClassnameMappingDir {
+object ClassnameMappingDirStream {
 
   def extractFileName(path :Path) : String = {
     path.getFileName().toString()
@@ -55,7 +55,7 @@ object ClassnameMappingDir {
  * Generate a sequence of Map records following the schema of
  * the cassievede.image table.
  */
-class ClassnameMappingDir(
+class ClassnameMappingDirStream(
     rootDir: File,
     accpetedExtensions: HashSet[String] = Constants.imageExtensions) extends Datastream {
 
@@ -72,7 +72,7 @@ class ClassnameMappingDir(
     q
   }
 
-  def hasNext() : Boolean = {
+  def hasNext(): Boolean = {
     if (allFilepaths.isEmpty) { return false }
 
     // Try to build the next record
@@ -93,8 +93,8 @@ class ClassnameMappingDir(
 
     // We can build a record .. do it!
     val r = new HashMap[String, Any]
-    r("name") = ClassnameMappingDir.extractFileName(path)
-    r("classnames") = List(ClassnameMappingDir.extractClassname(path))
+    r("name") = ClassnameMappingDirStream.extractFileName(path)
+    r("classnames") = List(ClassnameMappingDirStream.extractClassname(path))
     r("uri") = f.toURI()
     r("data") = FileUtils.readFileToByteArray(f)
     mNext = r

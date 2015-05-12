@@ -63,15 +63,15 @@ TODO
 docs: discuss decision about images and file size is ok
 
 pq:
- x read a dir of files
- x unit test it
- x lazy load file from disk
- x unit test it 
+ D read a dir of files
+ D unit test it
+ D lazy load file from disk
+ D unit test it 
  * load that into spark RDD and then into cassie
  * unit test it
- x add cache
+ D add cache
  * unit test it
- x add async spark parallelize() and save() with a queue of futures,
+ D add async spark parallelize() and save() with a queue of futures,
  max queue length from command line (default to num spark machines)
  * manual test it
  * add ssh tunel

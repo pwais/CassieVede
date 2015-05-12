@@ -39,9 +39,17 @@ RUN echo "deb http://dl.bintray.com/sbt/debian /" >> /etc/apt/sources.list.d/sbt
     apt-get install --force-yes -y sbt && \
 	sbt help
 
-## Warm up sbt dependencies
+### Warm up sbt dependencies
 #ADD CassieVedeSBTInit /opt/CassieVedeSBTInit
 #RUN cd /opt/CassieVedeSBTInit && sbt update
+
+# Spark
+RUN apt-get -y install curl
+WORKDIR /tmp/
+RUN curl --progress-bar https://d3kbcqa49mib13.cloudfront.net/spark-1.3.1-bin-hadoop2.6.tgz | tar zxvf -
+RUN mv spark-1.3.1-bin-hadoop2.6 /opt/spark
+RUN ls -lhat /opt/spark/bin/spark-submit # TODO: better test; --version is broken
+
 
 # Captain Proto build dependencies
 RUN apt-get -y install pkg-config build-essential clang llvm lldb-3.4 cmake dh-autoreconf libc++abi-dev libc++-dev
@@ -53,7 +61,7 @@ RUN apt-get -y install pkg-config build-essential clang llvm lldb-3.4 cmake dh-a
 #RUN apt-get -y upgrade cmake
 
 # Utils
-RUN apt-get -y install git vim curl wget time s3cmd iftop 
+RUN apt-get -y install git vim wget time s3cmd iftop sshfs 
 
 # Python
 RUN apt-get -y install python2.7 python-pip
