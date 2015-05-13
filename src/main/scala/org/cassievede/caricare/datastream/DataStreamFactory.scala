@@ -20,8 +20,8 @@ import org.cassievede.CVSessionConfig
 import java.io.File
 import java.util.UUID
 import scala.collection.immutable.HashSet
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import org.apache.commons.logging.Log
+import org.apache.commons.logging.LogFactory
 import org.cassievede.CVSessionConfig
 import scala.collection.mutable.HashMap
 import com.google.common.collect.BiMap
@@ -29,7 +29,7 @@ import com.datastax.driver.core.Cluster
 
 object DataStreamFactory {
 
-  val log :Logger = LoggerFactory.getLogger("DataStreamFactory")
+  val log :Log = LogFactory.getLog("DataStreamFactory")
 
   def createStream(conf: CVSessionConfig) : Datastream = {
 

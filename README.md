@@ -23,7 +23,7 @@ and (especially) memory locking (so that JVM calls to mmap work correctly).
 If you're using Docker on Mac OS X, you'll want to modify the daemon to
 increase these ulimits as follows:
 
-1. Log in to the boot2docker machine: `mac $ boot2docker ssh`
+1. Log in to the boot2docker machine: `your@mac.local$ boot2docker ssh`
 
 2. Run as root `root@boot2docker# sudo su`
 

@@ -62,8 +62,8 @@ class LoaderQueue(
 
   def run() = {
     log.info(
-        "Using queue dpeth of " + maxQDepth +
-        " and chunk size of " + chunkSizeMB + "MB")
+        f"Using queue depth of ${maxQDepth} " +
+        "and chunk size of ${chunkSizeMB} MB")
 
     log.info("Loading data ...")
     while (data.hasNext) {
@@ -99,8 +99,7 @@ class LoaderQueue(
 
       val version =
         if (checkpointer == null) { 1 } else { checkpointer.checkpoint() }
-      log.error("sc: " + sc.toString())
-      log.error(sc.getConf.toDebugString)
+
       val task = Future {
         log.info("Loading chunk of " + curChunk.size + " to Cassandra ...")
         sc.parallelize(curChunk)
@@ -109,7 +108,7 @@ class LoaderQueue(
                 { CassandraRow.fromMap(r.toMap) })
             .saveToCassandra(
               TableDefs.CVKeyspaceName,
-              TableDefs.CVImagesTableName, PartitionKeyColumns)
+              TableDefs.CVImagesTableName)
         log.info("... done.")
       }
       taskQueue += VersionedTask(version, task)

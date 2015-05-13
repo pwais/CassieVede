@@ -46,8 +46,8 @@ RUN echo "deb http://dl.bintray.com/sbt/debian /" >> /etc/apt/sources.list.d/sbt
 # Spark
 RUN apt-get -y install curl
 WORKDIR /tmp/
-RUN curl --progress-bar https://d3kbcqa49mib13.cloudfront.net/spark-1.3.1-bin-hadoop2.6.tgz | tar zxvf -
-RUN mv spark-1.3.1-bin-hadoop2.6 /opt/spark
+RUN curl http://d3kbcqa49mib13.cloudfront.net/spark-1.2.2-bin-hadoop2.4.tgz | tar zxvf -
+RUN mv spark-1.2.2-bin-hadoop2.4 /opt/spark
 RUN ls -lhat /opt/spark/bin/spark-submit # TODO: better test; --version is broken
 
 
@@ -61,7 +61,7 @@ RUN apt-get -y install pkg-config build-essential clang llvm lldb-3.4 cmake dh-a
 #RUN apt-get -y upgrade cmake
 
 # Utils
-RUN apt-get -y install git vim wget time s3cmd iftop sshfs 
+RUN apt-get -y install git vim wget time s3cmd iftop sshfs lsof 
 
 # Python
 RUN apt-get -y install python2.7 python-pip

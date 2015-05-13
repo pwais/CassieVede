@@ -23,6 +23,10 @@ import org.cassievede.caricare.datastream.DataStreamFactory
 import org.cassievede.caricare.LoaderQueue
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
+
+
+//import org.apache.spark.Logging
+
 //import org.apache.log4j.BasicConfigurator
 //import org.apache.log4j.Logger
 //import org.apache.log4j.Level

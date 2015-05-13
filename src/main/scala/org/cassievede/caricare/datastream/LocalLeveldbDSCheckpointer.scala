@@ -16,8 +16,8 @@
 package org.cassievede.caricare.datastream
 
 import com.google.common.base.Preconditions.checkNotNull
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import org.apache.commons.logging.Log
+import org.apache.commons.logging.LogFactory
 import org.fusesource.leveldbjni.JniDBFactory._
 import org.iq80.leveldb.DB
 import org.iq80.leveldb.Options
@@ -29,7 +29,7 @@ import org.iq80.leveldb.DBException
 
 class LocalLeveldbDSCheckpointer(stream :Datastream = null) extends DatastreamCheckpointer  {
 
-  val log: Logger = LoggerFactory.getLogger("ChunkLoader")
+  val log: Log = LogFactory.getLog("ChunkLoader")
   var db :DB = null
   var curVersion :Long = 0
   var s :Datastream = stream
