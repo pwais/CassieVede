@@ -15,13 +15,17 @@
  */
 package org.cassievede
 
-import org.slf4j._
 import java.io.File
 import scala.collection.immutable.HashSet
 import com.datastax.driver.core.Cluster
 import com.datastax.driver.core.Session
 import org.cassievede.caricare.datastream.DataStreamFactory
 import org.cassievede.caricare.LoaderQueue
+import org.apache.commons.logging.Log
+import org.apache.commons.logging.LogFactory
+//import org.apache.log4j.BasicConfigurator
+//import org.apache.log4j.Logger
+//import org.apache.log4j.Level
 
 case class CVSessionConfig(
     stdinCVImage: Boolean = false,
@@ -43,7 +47,7 @@ case class CVSessionConfig(
     sparkQDepth: Long = -1,
 
     localDir: Boolean = false,
-    cassandra: String = "",
+    cassandra: String = "localhost", //TODO use casssie connector
     spark: String = "") // TODO keepme?
 
 //    foo: Int = -1, out: File = new File("."), xyz: Boolean = false,
@@ -53,7 +57,7 @@ case class CVSessionConfig(
 
 object CVMain {
 
-  val log: Logger = LoggerFactory.getLogger("CVMain")
+  val log: Log = LogFactory.getLog("CVMain")
 
   def safeExec(conf: CVSessionConfig, f: DBUtil => Unit) = {
     val c = DBUtil.createCluster(conf)
@@ -100,6 +104,10 @@ object CVMain {
   }
 
   def main(args: Array[String]) = {
+
+//    // w/out configuration, Spark's logging config will quiet our logging
+//    BasicConfigurator.configure()
+//    Logger.getRootLogger().setLevel(Level.INFO)
 
     val parser = new scopt.OptionParser[CVSessionConfig]("CassieVedeCLI") {
       head("CassieVedeCLI: A utility for image data loading with CassieVede")

@@ -36,15 +36,18 @@ libraryDependencies += "com.novocode" % "junit-interface" % "0.11" % Test
 libraryDependencies += "com.github.scopt" %% "scopt" % "3.3.0"
 
 // Loggy
-libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.0.13"
+//libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.0.13"
 //libraryDependencies += "org.slf4j" % "slf4j-api" % "1.7.9"
 //libraryDependencies += "org.slf4j" % "slf4j-simple" % "1.7.9"
+libraryDependencies += "commons-logging" % "commons-logging" % "1.2"
+libraryDependencies += "org.apache.logging.log4j" % "log4j-api" % "2.2"
+libraryDependencies += "org.apache.logging.log4j" % "log4j-core" % "2.2"
 
 // Debugging
 libraryDependencies += "org.apache.commons" % "commons-lang3" % "3.4"
 
 // Spark
-libraryDependencies += "org.apache.spark" %% "spark-core" % "1.3.1" % "compile"
+sparkVersion := "1.3.1"
 
 // Cassandra
 libraryDependencies += "org.apache.cassandra" % "cassandra-all" % "2.1.5" // Fix silly build bug

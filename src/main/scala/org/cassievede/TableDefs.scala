@@ -20,7 +20,7 @@ object TableDefs {
 
   val CVKeyspaceName = "cassievede"
 
-  val CVImagesTableName = "images"
+  val CVImagesTableName = "image"
 
   val CVDatasetTableName = "dataset"
 
@@ -39,7 +39,7 @@ CREATE TABLE cassievede.dataset
 CREATE TABLE cassievede.image
   (datasetid int,              // Foreign key: dataset.id
    partitionid int,            // Optionally partition a very large dataset
-   id uuid,                    // Unique ID
+   id bigint,                  // Unique ID
 
    // Core data
    name text,                  // Name of the image, e.g. original filename

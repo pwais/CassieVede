@@ -72,6 +72,8 @@ class ClassnameMappingDirStream(
     q
   }
 
+  var n :Long = 0
+
   def hasNext(): Boolean = {
     if (allFilepaths.isEmpty) { return false }
 
@@ -93,6 +95,7 @@ class ClassnameMappingDirStream(
 
     // We can build a record .. do it!
     val r = new HashMap[String, Any]
+    r("id") = n
     r("name") = ClassnameMappingDirStream.extractFileName(path)
     r("classnames") = List(ClassnameMappingDirStream.extractClassname(path))
     r("uri") = f.toURI()
@@ -101,6 +104,7 @@ class ClassnameMappingDirStream(
 
     // Don't generate this record again
     allFilepaths.dequeue()
+    n += 1
 
     return true
   }

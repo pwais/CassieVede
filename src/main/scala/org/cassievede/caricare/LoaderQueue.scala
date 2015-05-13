@@ -15,14 +15,18 @@
  */
 package org.cassievede.caricare
 
+// Must import connector first
+import com.datastax.spark._
+import com.datastax.spark.connector._
+import org.apache.spark.SparkContext
+import org.apache.spark.SparkConf
 import org.cassievede.CVSessionConfig
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import org.apache.commons.logging.Log
+import org.apache.commons.logging.LogFactory
 import org.cassievede.caricare.datastream.Datastream
 import org.cassievede.caricare.datastream.DatastreamCheckpointer
 import scala.concurrent.Future
 import scala.collection.mutable.Queue
-import org.apache.spark.SparkContext
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.MutableList
 import org.cassievede.TableDefs
@@ -35,12 +39,12 @@ class LoaderQueue(
     data :Datastream,
     checkpointer :DatastreamCheckpointer = null) {
 
-  val log: Logger = LoggerFactory.getLogger("DataStreamFactory")
+  val log: Log = LogFactory.getLog("DataStreamFactory")
 
   case class VersionedTask(version: Long, task: Future[Unit])
   val taskQueue: Queue[VersionedTask] = new Queue[VersionedTask]
 
-  lazy val sc = new SparkContext()
+  lazy val sc = new SparkContext(new SparkConf(true))
 
   val maxQDepth: Long = conf.sparkQDepth match {
     case x if x >= 1 => x
@@ -75,11 +79,11 @@ class LoaderQueue(
   private def fillQueue() = {
     while (data.hasNext && taskQueue.size < maxQDepth) {
 
-      log.debug("Creating a task ...")
+      log.info("Creating a task ...")
       val curChunk = MutableList[HashMap[String, Any]]()
 
 
-      log.debug("... reading records ...")
+      log.info("... reading records ...")
       var curChunkSizeBytes: Long = 0
       while (data.hasNext && curChunkSizeBytes < chunkSizeMB * 10e6) {
         val r = data.next()
@@ -88,33 +92,44 @@ class LoaderQueue(
           r.getOrElse("data", Array[Byte]()).asInstanceOf[Array[Byte]].length
         numRecordsRead += 1
       }
-      log.debug(
+      log.info(
           "... read total " + numRecordsRead + " records " +
           "(current chunk: " + (curChunkSizeBytes / 10e6) + "MB) ...")
 
 
       val version =
         if (checkpointer == null) { 1 } else { checkpointer.checkpoint() }
+      log.error("sc: " + sc.toString())
+      log.error(sc.getConf.toDebugString)
       val task = Future {
-        val c = new ChunkLoader()
-        c.load(curChunk, TableDefs.CVKeyspaceName, TableDefs.CVImagesTableName)
+        log.info("Loading chunk of " + curChunk.size + " to Cassandra ...")
+        sc.parallelize(curChunk)
+            .map(
+              (r: HashMap[String, Any]) =>
+                { CassandraRow.fromMap(r.toMap) })
+            .saveToCassandra(
+              TableDefs.CVKeyspaceName,
+              TableDefs.CVImagesTableName, PartitionKeyColumns)
+        log.info("... done.")
       }
       taskQueue += VersionedTask(version, task)
-      log.debug("... enqueued task.")
+      log.info("... enqueued task.")
     }
   }
 
   private def waitUntilQueueHasMaxSize(size: Long) = {
     log.info("... blocking on open tasks ...")
-    while (taskQueue.size >= size) {
+    while (taskQueue.size > size) {
       val entry = taskQueue.dequeue()
 
-      log.debug("Blocking on " + entry + "; kill to stop ...")
-      Await.ready(entry.task, Duration.Inf) // Wait until user kills this process
-      log.debug("... task complete!")
+      log.info("Blocking on " + entry + "; kill to stop ...")
+      Await.result(entry.task, Duration.Inf) // Wait until user kills this process
+      log.info("... task complete!")
 
-      if (checkpointer != null) { checkpointer.release(entry.version) }
-      log.debug("... released version " + entry.version + '.')
+      if (checkpointer != null) {
+        checkpointer.release(entry.version)
+        log.info("... released version " + entry.version + '.')
+      }
     }
     log.info("... done blocking; queue now has size " + taskQueue.size + "...")
   }

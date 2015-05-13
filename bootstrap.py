@@ -213,7 +213,7 @@ if __name__ == '__main__':
          os.environ.get('PATH', '') + ':' + os.path.join(CAPNP_PATH, 'bin/'))
       run_in_shell(
         "cd " + CAPNP_JAVA_PATH + " && "
-        "make && sbt compile test assembly publishLocal")
+        "make && sbt compile test package publishLocal")
     
   
   
@@ -230,7 +230,7 @@ if __name__ == '__main__':
     run_in_shell("sbt test")
   
   if opts.install_local:
-    run_in_shell("sbt package publishLocal")
+    run_in_shell("sbt assembly publishLocal")
 
 
 
