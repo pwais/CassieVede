@@ -36,7 +36,9 @@ class LocalLeveldbDSCheckpointer(stream :Datastream = null) extends DatastreamCh
 
   override def finalize() : Unit = { if (db != null) { db.close() } }
 
-  def useLocalPath(loc: File) :Boolean = {
+  def currentStream() : Datastream = s
+
+  def useLocalPath(loc: File) : Boolean = {
     checkNotNull(loc)
     if (db != null) { db.close() }
 

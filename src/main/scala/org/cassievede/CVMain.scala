@@ -64,46 +64,40 @@ object CVMain {
 
   val log: Log = LogFactory.getLog("CVMain")
 
-  def safeExec(conf: CVSessionConfig, f: DBUtil => Unit) = {
-    val c = DBUtil.createCluster(conf)
-    try {
-      val d = new DBUtil(c.newSession())
-      f(d)
-    } finally {
-      c.close()
-    }
-  }
-
   def doLoad(conf: CVSessionConfig) = {
-    val stream = DataStreamFactory.createStream(conf)
+    var stream = DataStreamFactory.createStream(conf)
     val checkpointer = DataStreamFactory.createCheckpointer(conf, stream)
+    if (stream == null && checkpointer != null) {
+      stream = checkpointer.currentStream()
+    }
+    require(stream != null, "Could not create a data source")
     val q = new LoaderQueue(conf, stream, checkpointer)
     q.run()
   }
 
   def doCreateDataset(conf: CVSessionConfig) = {
-    safeExec(
+    DBUtil.safeDBUtilExec(
       conf,
-      (d: DBUtil) => {
-        d.createDataset(conf.dataset)
+      dbutil => {
+        dbutil.createDataset(conf.dataset)
         log.info("Created dataset: " + conf.dataset)
       })
   }
 
   def doDropDataset(conf: CVSessionConfig) = {
-    safeExec(
+    DBUtil.safeDBUtilExec(
       conf,
-      (d: DBUtil) => {
-        d.dropDataset(conf.dataset)
+      dbutil => {
+        dbutil.dropDataset(conf.dataset)
         log.info("Deleted all data for dataset: " + conf.dataset)
       })
   }
 
   def doCreateKS(conf: CVSessionConfig) = {
-    safeExec(
+    DBUtil.safeDBUtilExec(
       conf,
-      (d: DBUtil) => {
-        d.createTables()
+      dbutil => {
+        dbutil.createTables()
         log.info("Created Cassie Keyspace and Tables")
       })
   }

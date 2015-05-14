@@ -15,24 +15,25 @@
  */
 package org.cassievede.caricare
 
-// Must import connector first
-import com.datastax.spark._
-import com.datastax.spark.connector._
-import org.apache.spark.SparkContext
-import org.apache.spark.SparkConf
-import org.cassievede.CVSessionConfig
-import org.apache.commons.logging.Log
-import org.apache.commons.logging.LogFactory
-import org.cassievede.caricare.datastream.Datastream
-import org.cassievede.caricare.datastream.DatastreamCheckpointer
-import scala.concurrent.Future
-import scala.collection.mutable.Queue
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.MutableList
-import org.cassievede.TableDefs
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.collection.mutable.Queue
 import scala.concurrent.Await
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 import scala.concurrent.duration.Duration
+
+import org.apache.commons.logging.Log
+import org.apache.commons.logging.LogFactory
+import org.apache.spark.SparkConf
+import org.apache.spark.SparkContext
+import org.cassievede.CVImageRecord
+import org.cassievede.CVSessionConfig
+import org.cassievede.TableDefs
+import org.cassievede.caricare.datastream.Datastream
+import org.cassievede.caricare.datastream.DatastreamCheckpointer
+
+import com.datastax.spark.connector.toRDDFunctions
 
 class LoaderQueue(
     conf :CVSessionConfig,
@@ -63,7 +64,7 @@ class LoaderQueue(
   def run() = {
     log.info(
         f"Using queue depth of ${maxQDepth} " +
-        "and chunk size of ${chunkSizeMB} MB")
+        f"and chunk size of ${chunkSizeMB} MB")
 
     log.info("Loading data ...")
     while (data.hasNext) {
@@ -104,8 +105,7 @@ class LoaderQueue(
         log.info("Loading chunk of " + curChunk.size + " to Cassandra ...")
         sc.parallelize(curChunk)
             .map(
-              (r: HashMap[String, Any]) =>
-                { CassandraRow.fromMap(r.toMap) })
+              (r: HashMap[String, Any]) => { CVImageRecord.toRow(r) })
             .saveToCassandra(
               TableDefs.CVKeyspaceName,
               TableDefs.CVImagesTableName)

@@ -15,18 +15,24 @@
  */
 package org.cassievede.caricare
 
-import com.google.common.base.Preconditions.checkNotNull
 import java.io.File
-import java.net.URI
+import java.net.URL
+
+import scala.concurrent.Await
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+import scala.concurrent.TimeoutException
+import scala.concurrent.duration.DurationInt
+
 import org.apache.commons.io.FileUtils
-import java.nio.ByteBuffer
-import scala.collection.mutable.HashMap
+import org.apache.commons.io.FilenameUtils
+import org.apache.commons.lang3.exception.ExceptionUtils
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
-import com.google.common.io.Files
-import java.security.MessageDigest
-import com.google.common.hash.Hashing
+
 import com.google.common.base.Charsets
+import com.google.common.base.Preconditions.checkNotNull
+import com.google.common.hash.Hashing
 
 object Utils {
 
@@ -42,20 +48,40 @@ object Utils {
 
   def downloadToTemp(u: String) : File = {
     checkNotNull(u)
-    val uri = new URI(u)
-
     val hashCode =
       Hashing
         .md5()
         .newHasher()
-        .putString(uri.toString(), Charsets.UTF_8)
+        .putString(u, Charsets.UTF_8)
         .hash()
         .toString()
-    val dest = FileUtils.getFile(cvTempRoot, hashCode, uri.getFragment())
+    val fname = u.substring(u.lastIndexOf('/') + 1, u.size)
+        // NB FilenameUtils.getBaseName() is actually broken for fname.tar.gz
+    val dest = FileUtils.getFile(cvTempRoot, hashCode, fname)
 
     if (!dest.exists()) {
-      log.info(f"Downloading ${uri} to ${dest.toString()} ... ")
-      FileUtils.copyURLToFile(uri.toURL(), dest)
+      // Download the file and log progress every second or so
+      log.info(f"Downloading ${u} to ${dest.toString()} ... ")
+      val dl = Future { FileUtils.copyURLToFile(new URL(u), dest) }
+      var working = true
+      while (working) {
+        try {
+          Await.result(dl, 1 second)
+          working = false
+        } catch {
+          case te: TimeoutException => {
+            val sz =
+              FileUtils.getFile(dest).length().asInstanceOf[Float] * 1e-6
+            log.info(f"... ${dest} downloaded ${sz} MB ...")
+          }
+          case e: Exception => {
+            log.error(
+              f"Error while trying to fetch ${u}: ${e} \n" +
+              ExceptionUtils.getStackTrace(e))
+            working = false
+          }
+        }
+      }
       log.info("... done.")
     }
 

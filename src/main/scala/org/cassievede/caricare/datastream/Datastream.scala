@@ -38,4 +38,6 @@ trait DatastreamCheckpointer {
   // Save state to (or resume from) this local path.  Return true on success
   def useLocalPath(loc: File) : Boolean
 
+  def currentStream() : Datastream
+
 }

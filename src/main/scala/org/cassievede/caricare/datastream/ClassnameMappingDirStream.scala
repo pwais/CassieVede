@@ -100,17 +100,6 @@ class ClassnameMappingDirStream(
     r("classnames") = List(ClassnameMappingDirStream.extractClassname(path))
     r("uri") = f.toURI()
     r("data") = FileUtils.readFileToByteArray(f)
-
-    r("binlabels") = null
-    r("tags") = null
-    r("width") = null
-    r("height") = null
-    r("geoid") = null
-    r("longitude") = null
-    r("latitude") = null
-    r("uri") = null
-    r("extra") = null
-
     mNext = r
 
     // Don't generate this record again

@@ -26,8 +26,25 @@ import java.awt.image.BufferedImage
 import java.awt.image.DataBufferByte
 import org.apache.commons.io.output.ByteArrayOutputStream
 import javax.imageio.ImageIO
+import org.apache.commons.logging.Log
+import org.apache.commons.logging.LogFactory
 
 object CIFAR10 extends StandardDataset {
+
+  val log: Log = LogFactory.getLog("CIFAR10")
+
+  // From included batches.meta.txt
+  val cidToClassname = Map(
+      0 -> "airplane",
+      1 -> "automobile",
+      2 -> "bird",
+      3 -> "cat",
+      4 -> "deer",
+      5 -> "dog",
+      6 -> "frog",
+      7 -> "horse",
+      8 -> "ship",
+      9 -> "truck")
 
   def datasetNames() : List[String] = {
     List(
@@ -59,24 +76,22 @@ object CIFAR10 extends StandardDataset {
         val entryBytes =
           ByteBuffer.allocate(curEntry.getSize().asInstanceOf[Int])
         tarStream.inStream.read(entryBytes.array())
-        curIterExamples =
-          new IterExamples(
-              entryBytes,
-              // Map filename to a dataset name
-              curEntry.getName() match {
-                case "data_batch_1.bin" => "cifar10.train.1"
-                case "data_batch_2.bin" => "cifar10.train.2"
-                case "data_batch_3.bin" => "cifar10.train.3"
-                case "data_batch_4.bin" => "cifar10.train.4"
-                case "data_batch_5.bin" => "cifar10.train.5"
-                case "data_batch_test.bin" => "cifar10.test"
-                case _ => {
-                    require(
-                        false,
-                        f"Unexpected entry in tarfile ${curEntry.getName()}")
-                    ""
-                }
-              })
+
+        // Map filename to a dataset name, or skip the entry
+        val datasetName = curEntry.getName() match {
+          case "cifar-10-batches-bin/data_batch_1.bin" => "cifar10.train.1"
+          case "cifar-10-batches-bin/data_batch_2.bin" => "cifar10.train.2"
+          case "cifar-10-batches-bin/data_batch_3.bin" => "cifar10.train.3"
+          case "cifar-10-batches-bin/data_batch_4.bin" => "cifar10.train.4"
+          case "cifar-10-batches-bin/data_batch_5.bin" => "cifar10.train.5"
+          case "cifar-10-batches-bin/data_batch_test.bin" => "cifar10.test"
+          case _ => {
+              log.info(f"Skipping entry in tarfile ${curEntry.getName()}")
+              return hasNext()
+          }
+        }
+
+        curIterExamples = new IterExamples(entryBytes, datasetName)
       }
 
       return curIterExamples.hasNext()
@@ -108,7 +123,7 @@ object CIFAR10 extends StandardDataset {
                   .getDataBuffer()
                   .asInstanceOf[DataBufferByte]
                   .getData()
-        for (i <- 0 to 1024) {
+        for (i <- 0 until 1024) {
           px((i * 3)) = imageBuffer.get(1024 * 2 + i)
           px((i * 3) + 1) = imageBuffer.get(1024 + i)
           px((i * 3) + 2) = imageBuffer.get(i)
@@ -121,7 +136,7 @@ object CIFAR10 extends StandardDataset {
         val r = new HashMap[String, Any]
         r("id") = n
         r("name") = dn + n
-        r("classnames") = List("" + label)
+        r("classnames") = List(cidToClassname(label))
         r("data") = pngBytes
         return r
       }

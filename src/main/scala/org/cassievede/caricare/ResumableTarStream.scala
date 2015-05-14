@@ -25,17 +25,21 @@ import org.apache.commons.io.FilenameUtils
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 
+object ResumableTarStream {
+  def gzExt() = List("tar.gz", "tgz", "gz", "zip")
+}
+
 class ResumableTarStream(tf: File)
   extends Iterator[TarArchiveEntry] with Serializable {
 
-  val log: Log = LogFactory.getLog("CheckpointableTarStream")
+  val log: Log = LogFactory.getLog("ResumableTarStream")
 
   val inStream = {
     checkNotNull(tf)
     log.info(f"Reading from ${tf.getPath()}")
     val ext = FilenameUtils.getExtension(tf.getPath())
-    val gz = List("tar.gz", "tgz", "gz", "zip")
-    val baseStream = if (gz.contains(ext)) {
+    val baseStream = if (ResumableTarStream.gzExt().contains(ext)) {
+      log.debug("Reading gzip")
       new GzipCompressorInputStream(new FileInputStream(tf))
     } else {
       new FileInputStream(tf)
@@ -54,7 +58,7 @@ class ResumableTarStream(tf: File)
       pos = bytesRead
     }
     mNext = inStream.getNextTarEntry()
-    return mNext == null
+    return (mNext != null)
   }
 
   def next() : TarArchiveEntry = {

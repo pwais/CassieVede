@@ -16,25 +16,52 @@
 
 package org.cassievede
 
+import scala.collection.JavaConversions
+
+import org.apache.commons.logging.Log
+import org.apache.commons.logging.LogFactory
+import org.apache.spark.SparkConf
+
+import com.datastax.driver.core.Row
 import com.datastax.driver.core.Session
 import com.datastax.driver.core.querybuilder.QueryBuilder
-import com.datastax.driver.core.querybuilder.QueryBuilder.eq
+import com.datastax.spark.connector.cql.CassandraConnector
+import com.datastax.spark.connector.cql.CassandraConnectorConf
 import com.google.common.collect.BiMap
 import com.google.common.collect.HashBiMap
-import com.datastax.driver.core.Row
-import scala.collection.JavaConversions
-import com.datastax.driver.core.Cluster
 
 object DBUtil {
-  def createCluster(conf: CVSessionConfig) : Cluster = {
+  def safeSessionExec[T](conf: CVSessionConfig, f: Session => T) : T = {
+    CassandraConnector(DBUtil.toSparkConf(conf)).withSessionDo {
+      session => f(session)
+    }
+  }
+
+  def safeDBUtilExec[T](conf: CVSessionConfig, f: DBUtil => T) : T = {
+    CassandraConnector(DBUtil.toSparkConf(conf)).withSessionDo {
+      session => {
+        val d = new DBUtil(session)
+        f(d)
+      }
+    }
+  }
+
+  def toSparkConf(conf: CVSessionConfig) : SparkConf = {
     val toks = conf.cassandra.split(":")
     val host = if (!toks(0).isEmpty()) { toks(0) } else { "127.0.0.1" }
     val port = if (toks.size > 1) { toks(0).toInt } else { 9042 }
-    return Cluster.builder().addContactPoint(host).withPort(port).build()
+    val sconf = new SparkConf(loadDefaults = true)
+    sconf.set(
+        CassandraConnectorConf.CassandraConnectionHostProperty, host)
+    sconf.set(
+        CassandraConnectorConf.CassandraConnectionNativePortProperty, "" + port)
+    return sconf
   }
 }
 
 class DBUtil(session: Session) {
+
+  val log :Log = LogFactory.getLog("DBUtil")
 
   def createTables() = {
     session.execute(TableDefs.Keyspace)
@@ -55,11 +82,12 @@ class DBUtil(session: Session) {
     return m
   }
 
-  def createDataset(datasetName: String) = {
+  def createDataset(datasetName: String) : Unit = {
     val dToID = getDatasetIdMap()
-    require(
-      !dToID.containsKey(datasetName),
-      "Dataset " + datasetName + " already exists!")
+    if (dToID.containsKey(datasetName)) {
+      log.debug(f"Dataset ${datasetName} already exists")
+      return
+    }
 
     val maxId =
       if (dToID.values().isEmpty()) {

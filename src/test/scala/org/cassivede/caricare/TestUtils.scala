@@ -23,18 +23,18 @@ import java.io.FileNotFoundException
 
 class UtilsSpec extends FlatSpec with Matchers {
 
-  "Utils.download" should "throw for an invalid URI" in {
-    val existe = this.getClass().getResource("/images").toURI()
-    val noExiste = new URI(existe.toString() + "/moof")
-    an [FileNotFoundException] should be thrownBy Utils.download(noExiste)
-  }
-
-  "Utils.download" should "download a local file" in {
-    val im =
-      this.getClass().getResource("/images/root/cat/390-cat-sitting-whiskers.jpg").toURI()
-    val buf = Utils.download(im)
-    buf should not be (null)
-    buf.array().length should not be (0)
-  }
+//  "Utils.download" should "throw for an invalid URI" in {
+//    val existe = this.getClass().getResource("/images").toURI()
+//    val noExiste = new URI(existe.toString() + "/moof")
+//    an [FileNotFoundException] should be thrownBy Utils.download(noExiste)
+//  }
+//
+//  "Utils.download" should "download a local file" in {
+//    val im =
+//      this.getClass().getResource("/images/root/cat/390-cat-sitting-whiskers.jpg").toURI()
+//    val buf = Utils.download(im)
+//    buf should not be (null)
+//    buf.array().length should not be (0)
+//  }
 
 }

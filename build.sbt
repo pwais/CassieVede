@@ -17,7 +17,7 @@ version := "0.0.1"
 scalaVersion := "2.10.5"
 name := "cassievede"
 
-mainClass in assembly := Some("org.cassievede.CVMain")
+mainClass := Some("org.cassievede.CVMain")
 
 // Allow local repo use
 resolvers += Resolver.mavenLocal

@@ -27,6 +27,7 @@ import scala.collection.mutable.HashMap
 import com.google.common.collect.BiMap
 import com.datastax.driver.core.Cluster
 import org.cassievede.caricare.stddata.CIFAR10
+import org.cassievede.caricare.stddata.StandardDataset
 
 object DataStreamFactory {
 
@@ -62,7 +63,8 @@ object DataStreamFactory {
           conf.cacheDir,
           "Leveldb_" + UUID.randomUUID().toString())
     val c = new LocalLeveldbDSCheckpointer(s)
-    c.useLocalPath(dbPath)
+    val success = c.useLocalPath(dbPath)
+    require(success, "Failed to set up / resume checkpointer")
     return c
   }
 
@@ -95,15 +97,20 @@ object DataStreamFactory {
   }
 
   private def createStdDataset(conf: CVSessionConfig) : Datastream = {
-    // TODO create dataset entries ...
-
-    conf.stdDataset match {
-      case "CIFAR10" => CIFAR10.stream()
+    val d: StandardDataset = conf.stdDataset match {
+      case "cifar10" => CIFAR10
       case _ => {
         log.error(f"Unsupported dataset ${conf.stdDataset}")
-        null
+        return null
       }
     }
+
+    // Create all induced datasets
+    d.datasetNames().foreach {
+      name => DBUtil.safeDBUtilExec(conf, dbutil => dbutil.createDataset(name))
+    }
+
+    return d.stream()
   }
 
   // Wrap `d` in required adapters
@@ -133,18 +140,8 @@ object DataStreamFactory {
     conf: CVSessionConfig,
     s: Datastream) extends Datastream {
 
-    val datasetToID: BiMap[String, Int] = {
-      var cluster: Cluster = null
-      var m: BiMap[String, Int] = null
-      try {
-        cluster = DBUtil.createCluster(conf)
-        val d = new DBUtil(cluster.newSession())
-        m = d.getDatasetIdMap()
-      } finally {
-        cluster.close()
-      }
-      m
-    }
+    val datasetToID: BiMap[String, Int] =
+      DBUtil.safeDBUtilExec(conf, dbutil => dbutil.getDatasetIdMap())
 
     def hasNext(): Boolean = s.hasNext
 
