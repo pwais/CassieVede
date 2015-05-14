@@ -17,39 +17,49 @@ package org.cassievede.caricare
 
 import com.google.common.base.Preconditions.checkNotNull
 import java.io.File
-import java.io.IOException
 import java.net.URI
-import java.net.URISyntaxException
 import org.apache.commons.io.FileUtils
 import java.nio.ByteBuffer
 import scala.collection.mutable.HashMap
+import org.apache.commons.logging.Log
+import org.apache.commons.logging.LogFactory
+import com.google.common.io.Files
+import java.security.MessageDigest
+import com.google.common.hash.Hashing
+import com.google.common.base.Charsets
 
 object Utils {
 
-  def fillData(r: HashMap[String, Any]) = {
-    if ((r contains "uri") && !(r contains "data")) {
-      val uri = r("uri").asInstanceOf[URI]
-      r("data") = Utils.download(uri)
-    }
+  val log: Log = LogFactory.getLog("Utils")
+
+  lazy val cvTempRoot: File = {
+    val f =
+      FileUtils.getFile(FileUtils.getTempDirectory(), "CassieVedeUtil")
+    FileUtils.forceMkdir(f)
+    log.debug(f"CassieVedeUtil temp directory is ${f.toString()}")
+    f
   }
 
-  def fillDataset(r: HashMap[String, Any], datasetid: Int) = {
-    if (!(r contains "datasetid")) {
-      r("datasetid") = datasetid
-    }
-  }
+  def downloadToTemp(u: String) : File = {
+    checkNotNull(u)
+    val uri = new URI(u)
 
-  // TODO: keep?
-  def download(uri: URI) : ByteBuffer = {
-    checkNotNull(uri)
-    if (uri.getScheme().equals("file")) {
-      return ByteBuffer.wrap(
-          FileUtils.readFileToByteArray(
-              new File(uri.getRawPath())))
-    } else {
-      // TODO: http[s], s3 ...
-      throw new URISyntaxException(uri.toString(), "URI has unsupported scheme");
+    val hashCode =
+      Hashing
+        .md5()
+        .newHasher()
+        .putString(uri.toString(), Charsets.UTF_8)
+        .hash()
+        .toString()
+    val dest = FileUtils.getFile(cvTempRoot, hashCode, uri.getFragment())
+
+    if (!dest.exists()) {
+      log.info(f"Downloading ${uri} to ${dest.toString()} ... ")
+      FileUtils.copyURLToFile(uri.toURL(), dest)
+      log.info("... done.")
     }
+
+    dest
   }
 
 }
