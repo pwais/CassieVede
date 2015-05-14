@@ -115,7 +115,7 @@ object CIFAR10 extends StandardDataset {
         // FMI see:
         // * http://www.cs.toronto.edu/~kriz/cifar.html
         // * https://github.com/ivan-vasilev/neuralnetworks/blob/master/nn-samples/src/main/java/com/github/neuralnetworks/samples/cifar/CIFARInputProvider.java
-        val label :Int = b.getChar()
+        val label :Int = b.get() & 0xff // Byte.byte2int(b.get())
         val imageBuffer = b.slice()
         val image = new BufferedImage(32, 32, BufferedImage.TYPE_3BYTE_BGR)
         val px = image
@@ -128,6 +128,10 @@ object CIFAR10 extends StandardDataset {
           px((i * 3) + 1) = imageBuffer.get(1024 + i)
           px((i * 3) + 2) = imageBuffer.get(i)
         }
+        b.position(b.position() + (32 * 32 * 3))
+          // Skip over the imageBuffer bytes we just read
+
+        // Convert RGB raw image to png
         val pngByteStream = new ByteArrayOutputStream()
         ImageIO.write(image, "png", pngByteStream)
         val pngBytes = pngByteStream.toByteArray()
@@ -135,7 +139,8 @@ object CIFAR10 extends StandardDataset {
         // Finally, build the record
         val r = new HashMap[String, Any]
         r("id") = n
-        r("name") = dn + n
+        r("name") = dn + '.' + n
+        r("datasetName") = dn
         r("classnames") = List(cidToClassname(label))
         r("data") = pngBytes
         return r
