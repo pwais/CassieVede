@@ -151,9 +151,9 @@ object CVMain {
       opt[Int]("spark-chunk-size") action {
         (x, c) => c.copy(sparkChunkSize = x)
       } text(
-          "Size of a chunk in Megabytes.  By default we allocate 1/2 " +
-          "of the JVM heap to chunks, with each chunk using " +
-          "1 / --spark-queue-depth of the reserved memory.")
+          "Size of a chunk in Megabytes.  By default we use " +
+          "spark.akka.frameSize, which is the largest chunk we " +
+          "can send to the master")
       opt[Int]("spark-queue-depth") action {
         (x, c) => c.copy(sparkQDepth = x)
       } text(

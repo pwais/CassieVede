@@ -76,6 +76,7 @@ object CIFAR10 extends StandardDataset {
         val entryBytes =
           ByteBuffer.allocate(curEntry.getSize().asInstanceOf[Int])
         tarStream.inStream.read(entryBytes.array())
+        log.debug(f"Read tar entry of ${curEntry.getSize()} bytes")
 
         // Map filename to a dataset name, or skip the entry
         val datasetName = curEntry.getName() match {
@@ -92,6 +93,9 @@ object CIFAR10 extends StandardDataset {
         }
 
         curIterExamples = new IterExamples(entryBytes, datasetName)
+      } else if (!curIterExamples.hasNext()) {
+        curIterExamples = null
+        return hasNext()
       }
 
       return curIterExamples.hasNext()
@@ -115,6 +119,7 @@ object CIFAR10 extends StandardDataset {
         // FMI see:
         // * http://www.cs.toronto.edu/~kriz/cifar.html
         // * https://github.com/ivan-vasilev/neuralnetworks/blob/master/nn-samples/src/main/java/com/github/neuralnetworks/samples/cifar/CIFARInputProvider.java
+        log.debug(f"Reading from buffer pos ${b.position()}")
         val label :Int = b.get() & 0xff // Byte.byte2int(b.get())
         val imageBuffer = b.slice()
         val image = new BufferedImage(32, 32, BufferedImage.TYPE_3BYTE_BGR)
@@ -143,6 +148,9 @@ object CIFAR10 extends StandardDataset {
         r("datasetName") = dn
         r("classnames") = List(cidToClassname(label))
         r("data") = pngBytes
+
+        n += 1
+
         return r
       }
     }

@@ -55,8 +55,13 @@ class LoaderQueue(
   val chunkSizeMB: Long = conf.sparkChunkSize match {
     case x if x >= 1 => x
     case _ =>
-      ((Runtime.getRuntime().maxMemory().toDouble / 10e6)
-          * (1.0 / maxQDepth.toDouble)).toLong
+      sc.getConf.getInt("spark.akka.frameSize", 10)
+        // NB: sadly this property isn't set by default, and
+        // the default value is in a private Spark class:
+        // https://github.com/apache/spark/blob/8aa5aea7fee0ae9cd34e16c30655ee02b8747455/core/src/main/scala/org/apache/spark/util/AkkaUtils.scala#L131
+        // A workable fallback would be to use a fraction of the JVM heap:
+        //((Runtime.getRuntime().maxMemory().toDouble / 1e6)
+        //  * (1.0 / maxQDepth.toDouble)).toLong
   }
 
   var numRecordsRead: Long = 0
@@ -86,7 +91,7 @@ class LoaderQueue(
 
       log.info("... reading records ...")
       var curChunkSizeBytes: Long = 0
-      while (data.hasNext && curChunkSizeBytes < chunkSizeMB * 10e6) {
+      while (data.hasNext && curChunkSizeBytes < (chunkSizeMB * 1e6)) {
         val r = data.next()
         curChunk += r
         curChunkSizeBytes +=
@@ -94,8 +99,8 @@ class LoaderQueue(
         numRecordsRead += 1
       }
       log.info(
-          "... read total " + numRecordsRead + " records " +
-          "(current chunk: " + (curChunkSizeBytes / 10e6) + "MB) ...")
+          f"... read total ${curChunk.length} records " +
+          f"(current chunk: ${(curChunkSizeBytes / 1e6)} MB) ...")
 
 
       val version =

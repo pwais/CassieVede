@@ -15,19 +15,20 @@
  */
 package org.cassievede.caricare.datastream
 
-import org.cassievede.DBUtil
-import org.cassievede.CVSessionConfig
 import java.io.File
 import java.util.UUID
+
 import scala.collection.immutable.HashSet
+import scala.collection.mutable.HashMap
+
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.cassievede.CVSessionConfig
-import scala.collection.mutable.HashMap
-import com.google.common.collect.BiMap
-import com.datastax.driver.core.Cluster
+import org.cassievede.DBUtil
 import org.cassievede.caricare.stddata.CIFAR10
 import org.cassievede.caricare.stddata.StandardDataset
+
+import com.google.common.collect.BiMap
 
 object DataStreamFactory {
 
@@ -115,7 +116,7 @@ object DataStreamFactory {
 
   // Wrap `d` in required adapters
   private def wrapStream(conf: CVSessionConfig, d: Datastream) : Datastream = {
-    return new SetPartitionId(new DatasetNameToId(conf, d))
+    return new LogProgress(new SetPartitionId(new DatasetNameToId(conf, d)))
   }
 
 
@@ -172,6 +173,23 @@ object DataStreamFactory {
       }
 
       r("partitionid") = curPartitionid
+      return r
+    }
+  }
+
+  class LogProgress(s: Datastream, interval: Long = 1000) extends Datastream {
+    var i: Long = 0
+    var b: Long = 0
+
+    def hasNext(): Boolean = s.hasNext
+
+    def next() : HashMap[String, Any] = {
+      val r = s.next()
+      i += 1
+      b += r.getOrElse("data", Array[Byte]()).asInstanceOf[Array[Byte]].length
+      if ((i % interval) == 0) {
+        log.info(f"Generated ${i} records of approx ${b * 1e-6}MB")
+      }
       return r
     }
   }

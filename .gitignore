@@ -3,6 +3,8 @@
 .project
 .classpath
 .cache
+.cache-main
+.cache-tests
 .pydevproject
 
 bin/

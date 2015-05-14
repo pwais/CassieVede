@@ -33,6 +33,9 @@ RUN echo "deb http://www.apache.org/dist/cassandra/debian 21x main" >> /etc/apt/
 
 ADD cassandra.yaml /etc/cassandra/cassandra.yaml
 
+# Cassandra CQL
+EXPOSE 9042
+
 # Scala / sbt
 RUN echo "deb http://dl.bintray.com/sbt/debian /" >> /etc/apt/sources.list.d/sbt.list && \
     apt-get update && \
@@ -50,6 +53,10 @@ RUN curl http://d3kbcqa49mib13.cloudfront.net/spark-1.2.2-bin-hadoop2.4.tgz | ta
 RUN mv spark-1.2.2-bin-hadoop2.4 /opt/spark
 RUN ls -lhat /opt/spark/bin/spark-submit # TODO: better test; --version is broken
 
+# Spark WebUI, worker WebUI, and Task UI
+EXPOSE 8080
+EXPOSE 8081
+EXPOSE 4040
 
 # Captain Proto build dependencies
 RUN apt-get -y install pkg-config build-essential clang llvm lldb-3.4 cmake dh-autoreconf libc++abi-dev libc++-dev

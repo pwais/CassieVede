@@ -38,7 +38,7 @@ CREATE TABLE cassievede.dataset
   val ImageTable = """
 CREATE TABLE cassievede.image
   (datasetid int,              // Foreign key: dataset.id
-   partitionid int,            // Optionally partition a very large dataset
+   partitionid int,            // Sub-partition a very large (>2B row) dataset
    id bigint,                  // Unique ID
 
    // Core data
