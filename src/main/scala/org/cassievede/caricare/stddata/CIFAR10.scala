@@ -27,7 +27,7 @@ import java.awt.image.DataBufferByte
 import org.apache.commons.io.output.ByteArrayOutputStream
 import javax.imageio.ImageIO
 
-class CIFAR10 extends StandardDataset {
+object CIFAR10 extends StandardDataset {
 
   def datasetNames() : List[String] = {
     List(

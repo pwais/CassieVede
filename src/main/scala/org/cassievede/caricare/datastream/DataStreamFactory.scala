@@ -26,6 +26,7 @@ import org.cassievede.CVSessionConfig
 import scala.collection.mutable.HashMap
 import com.google.common.collect.BiMap
 import com.datastax.driver.core.Cluster
+import org.cassievede.caricare.stddata.CIFAR10
 
 object DataStreamFactory {
 
@@ -94,7 +95,15 @@ object DataStreamFactory {
   }
 
   private def createStdDataset(conf: CVSessionConfig) : Datastream = {
-    return null // TODO
+    // TODO create dataset entries ...
+
+    conf.stdDataset match {
+      case "CIFAR10" => CIFAR10.stream()
+      case _ => {
+        log.error(f"Unsupported dataset ${conf.stdDataset}")
+        null
+      }
+    }
   }
 
   // Wrap `d` in required adapters

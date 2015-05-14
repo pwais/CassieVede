@@ -36,6 +36,7 @@ case class CVSessionConfig(
     cnameDirs: Seq[File] = Seq(),
     cnameDirExts: Seq[String] = Constants.imageExtensions.toSeq,
     dataset: String = null,
+    stdDataset: String = null,
 
     cache: Boolean = false,
     resumeCache: Boolean = false,
@@ -131,6 +132,9 @@ object CVMain {
           "With --cname-dirs, accept only files with the given extensions. " +
           "Use the empty string to accept all files.  Default accepted " +
           "extensions: " + Constants.imageExtensions.toSeq)
+      opt[String]("std-dataset") action {
+        (x, c) => c.copy(stdDataset = x)
+      } text("Load a standard dataset (choices: TODO")
 
       ///
       /// Cache
