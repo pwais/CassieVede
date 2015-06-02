@@ -120,7 +120,7 @@ object CIFAR10 extends StandardDataset {
         // * http://www.cs.toronto.edu/~kriz/cifar.html
         // * https://github.com/ivan-vasilev/neuralnetworks/blob/master/nn-samples/src/main/java/com/github/neuralnetworks/samples/cifar/CIFARInputProvider.java
         log.debug(f"Reading from buffer pos ${b.position()}")
-        val label :Int = b.get() & 0xff // Byte.byte2int(b.get())
+        val label :Int = b.get() & 0xff // TODO Byte.byte2int(b.get()) ?
         val imageBuffer = b.slice()
         val image = new BufferedImage(32, 32, BufferedImage.TYPE_3BYTE_BGR)
         val px = image

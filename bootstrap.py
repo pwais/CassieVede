@@ -320,7 +320,7 @@ if __name__ == '__main__':
     docker_cmd = (
       "docker run -d -t -p 9042:9042 -p 8080:8080 -p 8081:8081 " +
         "-w /opt/CassieVede " +
-        "--cap-add SYS_ADMIN --device /dev/fuse " +
+        "--cap-add SYS_ADMIN --device /dev/fuse " + # For SSHFS
         "--name " + opts.docker_name + " " +
         " ".join(("-v " + src + ":" + dst) for (src, dst) in vol_maps) + " " +
         opts.docker_tag)
@@ -365,7 +365,7 @@ if __name__ == '__main__':
   if opts.indocker:
     start_docker()
     docker_cmd = "docker exec -it " + opts.docker_name + " bash"
-    log.info("command: " + docker_cmd)
+    log.info("Command: " + docker_cmd)
     os.execvp("docker", docker_cmd.split(" "))
   
   if opts.rm_docker:
