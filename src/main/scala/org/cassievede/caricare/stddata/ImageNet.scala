@@ -16,29 +16,41 @@
 
 package org.cassievede.caricare.stddata
 
-import com.google.common.base.Preconditions.checkNotNull
-import org.cassievede.caricare.datastream.Datastream
-import scala.collection.mutable.HashMap
 import java.io.File
-import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
-import java.io.FileInputStream
-import org.cassievede.caricare.ResumableTarStream
-import org.apache.commons.compress.archivers.tar.TarArchiveEntry
-import org.apache.commons.logging.Log
-import org.apache.commons.logging.LogFactory
-import org.apache.commons.io.FilenameUtils
-import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
 import java.nio.ByteBuffer
 
+import scala.collection.mutable.HashMap
+
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
+import org.apache.commons.logging.Log
+import org.apache.commons.logging.LogFactory
+import org.cassievede.CVSessionConfig
+import org.cassievede.caricare.ResumableTarStream
+import org.cassievede.caricare.datastream.Datastream
+
+import com.google.common.base.Preconditions.checkNotNull
+
+object ImageNet extends StandardDataset {
+
+  def datasetNames(conf: CVSessionConfig) = List("imagenet")
+
+  def stream(conf: CVSessionConfig) =
+    new ImageNet(new File(conf.stdDatasetPath))
+}
+
+
 /**
- * Generate a Datastream from a copy of the ImageNet tarball (~1.2TB)
+ * Generate a Datastream from a copy of the ImageNet tarball
+ * (~1.2TB "fall11_whole.tar") To obtain the tarball, see
+ * http://image-net.org/download
  *
  * The ImageNet tarball has the following structure:
  *   * Each file is a tarball named (wnid).tar.  This inner tarball
  *       contains image files of the form (wnid)_(img number).JPEG
  *   * There are 21841 total inner tarballs
  */
-class ImageNetStream(rootTar: File) extends Datastream {
+class ImageNet(rootTar: File) extends Datastream {
   val log: Log = LogFactory.getLog("ImageNetStream")
 
   lazy val rootTarStream = new ResumableTarStream(rootTar)
@@ -73,7 +85,7 @@ class ImageNetStream(rootTar: File) extends Datastream {
 
   def next() : HashMap[String, Any] = {
     val r = curIter.next()
-    r("datasetName") = "ImageNet"
+    r("datasetName") = "imagenet"
     r("id") = n
 
     n += 1

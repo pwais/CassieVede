@@ -26,6 +26,7 @@ import org.apache.commons.logging.LogFactory
 import org.cassievede.CVSessionConfig
 import org.cassievede.DBUtil
 import org.cassievede.caricare.stddata.CIFAR10
+import org.cassievede.caricare.stddata.ImageNet
 import org.cassievede.caricare.stddata.StandardDataset
 
 import com.google.common.collect.BiMap
@@ -100,6 +101,7 @@ object DataStreamFactory {
   private def createStdDataset(conf: CVSessionConfig) : Datastream = {
     val d: StandardDataset = conf.stdDataset match {
       case "cifar10" => CIFAR10
+      case "imagenet" => ImageNet
       case _ => {
         log.error(f"Unsupported dataset ${conf.stdDataset}")
         return null
@@ -107,11 +109,11 @@ object DataStreamFactory {
     }
 
     // Create all induced datasets
-    d.datasetNames().foreach {
+    d.datasetNames(conf).foreach {
       name => DBUtil.safeDBUtilExec(conf, dbutil => dbutil.createDataset(name))
     }
 
-    return d.stream()
+    return d.stream(conf)
   }
 
   // Wrap `d` in required adapters

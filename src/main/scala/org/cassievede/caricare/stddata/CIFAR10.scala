@@ -28,6 +28,7 @@ import org.apache.commons.io.output.ByteArrayOutputStream
 import javax.imageio.ImageIO
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
+import org.cassievede.CVSessionConfig
 
 object CIFAR10 extends StandardDataset {
 
@@ -46,7 +47,7 @@ object CIFAR10 extends StandardDataset {
       8 -> "ship",
       9 -> "truck")
 
-  def datasetNames() : List[String] = {
+  def datasetNames(conf: CVSessionConfig) : List[String] = {
     List(
       "cifar10.train.1",
       "cifar10.train.2",
@@ -57,9 +58,9 @@ object CIFAR10 extends StandardDataset {
   }
 
   val cifar10Dist = "http://www.cs.toronto.edu/~kriz/cifar-10-binary.tar.gz"
-  lazy val sourceFile: File = Utils.downloadToTemp(cifar10Dist)
+  lazy val sourceFile = Utils.downloadToTemp(cifar10Dist)
 
-  def stream() : Datastream = new CIFAR10Stream()
+  def stream(conf: CVSessionConfig) : Datastream = new CIFAR10Stream()
 
   class CIFAR10Stream extends Datastream {
 

@@ -37,6 +37,7 @@ case class CVSessionConfig(
     cnameDirExts: Seq[String] = Constants.imageExtensions.toSeq,
     dataset: String = null,
     stdDataset: String = null,
+    stdDatasetPath: String = null,
 
     cache: Boolean = false,
     resumeCache: Boolean = false,
@@ -129,6 +130,9 @@ object CVMain {
       opt[String]("std-dataset") action {
         (x, c) => c.copy(stdDataset = x)
       } text("Load a standard dataset (choices: TODO")
+      opt[String]("std-dataset-path") action {
+        (x, c) => c.copy(stdDatasetPath = x)
+      } text("Read standard dataset data at this path (if applicable)")
 
       ///
       /// Cache

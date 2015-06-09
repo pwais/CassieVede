@@ -17,19 +17,13 @@ package org.cassievede.caricare.stddata
 
 import scala.collection.mutable.HashMap
 import org.cassievede.caricare.datastream.Datastream
+import org.cassievede.CVSessionConfig
 
 trait StandardDataset {
 
   // Return a list of dataset name(s) that this factory creates
-  def datasetNames() : List[String]
+  def datasetNames(conf: CVSessionConfig) : List[String]
 
-  // TODO: make the factory method do everything, including cache to disk
-
-//  // The dataset is a single file served from the given URI
-//  val fileUri: String = null
-//
-//  // User can stream the dataset without writing to the filesystem
-//  val streamable: Boolean = false
-
-  def stream() : Datastream
+  // Stream records from this dataset
+  def stream(conf: CVSessionConfig) : Datastream
 }
