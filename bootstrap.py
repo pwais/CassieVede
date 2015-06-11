@@ -135,6 +135,13 @@ if __name__ == '__main__':
   actions_group.add_option(
     '--rm-docker', default=False, action='store_true',
     help="Remove the Docker container started by --indocker")
+  
+  actions_group.add_option(
+    '--in-spark-submit', default=False, action='store_true',
+    help="Run the CassieVede jar in spark-submit")
+  actions_group.add_option(
+    '--in-spark-shell', default=False, action='store_true',
+    help="Run the CassieVede jar in spark-shell")
   option_parser.add_option_group(actions_group)
   
   opts, args = option_parser.parse_args()
