@@ -145,7 +145,8 @@ if __name__ == '__main__':
   
   actions_group.add_option(
     '--in-spark-submit', default=False, action='store_true',
-    help="Run the CassieVede jar in spark-submit")
+    help="Run the CassieVede jar in spark-submit.  Forwards args after -- to "
+         "the CassieVede main executable")
   actions_group.add_option(
     '--in-spark-shell', default=False, action='store_true',
     help="Run the CassieVede jar in spark-shell")
