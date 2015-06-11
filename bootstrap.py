@@ -251,7 +251,7 @@ if __name__ == '__main__':
       spark_cmd += " --jars"
     cv_jar_path = os.path.abspath(
                     "target/scala-2.10/cassievede-assembly-0.0.1.jar")
-    spark_cmd += cv_jar_path + " " + " ".join(args)
+    spark_cmd += " " + cv_jar_path + " " + " ".join(args)
     log.info("Command: " + spark_cmd)
     os.execvp(spark_cmd[0], spark_cmd.split(" "))
 
