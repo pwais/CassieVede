@@ -86,6 +86,13 @@ if __name__ == '__main__':
   config_group.add_option(
     '--spark', type="string", default='/opt/spark',
     help="Use this Spark installation [default: %default]")
+  config_group.add_option(
+    '--spark-master', type="string", default='localhost',
+    help="Use this spark master with spark-submit and spark-shell "
+         "[default: %default]")
+  config_group.add_option(
+    '--cassandra-host', type="string", default='localhost',
+    help="Connect Spark to this Cassandra node [default: %default]")
   option_parser.add_option_group(config_group)
   
   actions_group = OptionGroup(
@@ -243,6 +250,7 @@ if __name__ == '__main__':
 
   if opts.in_spark_submit or opts.in_spark_shell:
     run_in_shell("export SPARK_LOCAL_HOSTNAME=$(hostname -i)")
+    run_in_shell("export MASTER=" + opts.spark_master)
     spark_cmd = ""
     if opts.in_spark_submit:
       spark_cmd += os.path.join(opts.spark, "bin/spark-submit")
@@ -251,9 +259,10 @@ if __name__ == '__main__':
       spark_cmd += " --jars"
     cv_jar_path = os.path.abspath(
                     "target/scala-2.10/cassievede-assembly-0.0.1.jar")
+    spark_cmd += (
+      " --conf spark.cassandra.connection.host=" + opts.cassandra_host)
     spark_cmd += " " + cv_jar_path + " " + " ".join(args)
-    log.info("Command: " + spark_cmd)
-    os.execvp(spark_cmd[0], spark_cmd.split(" "))
+    run_in_shell(spark_cmd)
 
 
 
