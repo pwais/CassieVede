@@ -223,7 +223,6 @@ if __name__ == '__main__':
    ##
 
   if opts.build:
-    log.info("Building in " + opts.build_dir)
     run_in_shell("sbt compile")
     
   if opts.test:
