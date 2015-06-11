@@ -83,6 +83,9 @@ if __name__ == '__main__':
   config_group.add_option(
     '--docker-name', type="string", default='cv',
     help="Give the Docker dev container instance this name [default: %default]")
+  config_group.add_option(
+    '--spark', type="string", default='/opt/spark',
+    help="Use this Spark installation [default: %default]")
   option_parser.add_option_group(config_group)
   
   actions_group = OptionGroup(
@@ -230,6 +233,20 @@ if __name__ == '__main__':
   
   if opts.install_local:
     run_in_shell("sbt assembly publishLocal")
+
+  if opts.in_spark_submit or opts.in_spark_shell:
+    run_in_shell("export SPARK_LOCAL_HOSTNAME=$(hostname -i)")
+    spark_cmd = ""
+    if opts.in_spark_submit:
+      spark_cmd += os.path.join(opts.spark, "bin/spark-submit")
+    elif opts.in_spark_shell:
+      spark_cmd += os.path.join(opts.spark, "bin/spark-shell")
+      spark_cmd += " --jars"
+    cv_jar_path = os.path.abspath(
+                    "target/scala-2.10/cassievede-assembly-0.0.1.jar")
+    spark_cmd += cv_jar_path + " " + " ".join(args)
+    log.info("Command: " + spark_cmd)
+    os.execvp(spark_cmd[0], spark_cmd.split(" "))
 
 
 

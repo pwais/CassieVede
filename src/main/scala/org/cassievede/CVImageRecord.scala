@@ -48,4 +48,6 @@ object CVImageRecord {
     CassandraRow.fromMap(r.toMap)
   }
 
+  // TODO: to/from capnp
+
 }
