@@ -250,7 +250,7 @@ if __name__ == '__main__':
 
   if opts.in_spark_submit or opts.in_spark_shell:
     run_in_shell("export SPARK_LOCAL_HOSTNAME=$(hostname -i)")
-    run_in_shell("export MASTER=" + opts.spark_master)
+    run_in_shell("export MASTER=spark://" + opts.spark_master + ":7077")
     spark_cmd = ""
     if opts.in_spark_submit:
       spark_cmd += os.path.join(opts.spark, "bin/spark-submit")
