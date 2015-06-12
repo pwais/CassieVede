@@ -92,9 +92,9 @@ object SVTSynthChars extends StandardDataset {
       r("id") = n
       r("name") = entryname
       r("datasetName") = {
-        if (entryname.startsWith("train")) {
+        if (entryname.startsWith("synth/train")) {
           "ucsd.svt.synthchars.train"
-        } else if (entryname.startsWith("test")) {
+        } else if (entryname.startsWith("synth/test")) {
           "ucsd.svt.synthchars.test"
         } else {
           assert(false, f"Entry ${entryname} has undecipherable dataset")
@@ -118,7 +118,7 @@ object SVTSynthChars extends StandardDataset {
 
     private def getClassname(entryname: String) : String = {
       val toks = entryname.split('/')
-      assert(toks.size == 4, f"Don't know how to handle entry ${entryname}")
+      assert(toks.size == 5, f"Don't know how to handle entry ${entryname}")
       val charname = toks(2)
       if (charname.startsWith("-")) {
         // Trim the leading negative sign and return just the lowercase char
