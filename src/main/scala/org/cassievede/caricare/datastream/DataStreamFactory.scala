@@ -17,10 +17,8 @@ package org.cassievede.caricare.datastream
 
 import java.io.File
 import java.util.UUID
-
 import scala.collection.immutable.HashSet
 import scala.collection.mutable.HashMap
-
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.cassievede.CVSessionConfig
@@ -28,8 +26,8 @@ import org.cassievede.DBUtil
 import org.cassievede.caricare.stddata.CIFAR10
 import org.cassievede.caricare.stddata.ImageNet
 import org.cassievede.caricare.stddata.StandardDataset
-
 import com.google.common.collect.BiMap
+import org.cassievede.caricare.stddata.SVTSynthChars
 
 object DataStreamFactory {
 
@@ -101,6 +99,7 @@ object DataStreamFactory {
   private def createStdDataset(conf: CVSessionConfig) : Datastream = {
     val d: StandardDataset = conf.stdDataset match {
       case "cifar10" => CIFAR10
+      case "ucsd.svt.synthchars" => SVTSynthChars
       case "imagenet" => ImageNet
       case _ => {
         log.error(f"Unsupported dataset ${conf.stdDataset}")

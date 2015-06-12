@@ -47,7 +47,7 @@ import org.apache.commons.io.IOUtils
  *      case-sensitive)
  *    - Ixxxx.png is the image name; image numbers start from 0 for each class
  */
-class SVTSynthChars extends StandardDataset {
+object SVTSynthChars extends StandardDataset {
 
   val log: Log = LogFactory.getLog("SVTSynthChars")
 
@@ -79,6 +79,7 @@ class SVTSynthChars extends StandardDataset {
         }
       }
 
+      log.info(f"Found ${q.size} importable entries")
       q
     }
 
