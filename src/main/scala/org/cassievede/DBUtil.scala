@@ -47,6 +47,7 @@ object DBUtil {
   }
 
   def toSparkConf(conf: CVSessionConfig) : SparkConf = {
+    // TODO cleanup
 //    val toks = conf.cassandra.split(":")
 //    val host = if (!toks(0).isEmpty()) { toks(0) } else { "127.0.0.1" }
 //    val port = if (toks.size > 1) { toks(0).toInt } else { 9042 }

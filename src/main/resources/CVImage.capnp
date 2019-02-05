@@ -27,7 +27,7 @@ struct CVImage {
   datasetid @0 :Int32;
   datasetname @1 :Text;
   partitionid @2 :Int32;
-  id @3 :Data; // UUID bytes
+  id @3 :Int64;
   
   // Core data
   name @4 :Text;

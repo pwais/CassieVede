@@ -1,6 +1,8 @@
 CassieVede
 ==========
 
+(This project is old / abandoned / for reference only)
+
 "Cassandra Sees."  A utility for managing datasets of images in
 [Cassandra](http:cassandra.apache.org/).
 
